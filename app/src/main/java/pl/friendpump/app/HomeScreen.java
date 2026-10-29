@@ -45,21 +45,16 @@ final class HomeScreen {
 
     private void showCircles(JSONArray items) {
         LinearLayout col = column();
-        col.addView(ui.label("Cześć, " + userName + "!", 28, Ui.INK));
+        col.addView(ui.title("Cześć, " + userName + "!"));
         if (items.length() == 0) col.addView(ui.label("Nie masz jeszcze kręgu. Utwórz pierwszy i wyślij kod znajomym.", 16, Ui.MUTED));
         for (int i = 0; i < items.length(); i++) col.addView(card(items.optJSONObject(i)));
         col.addView(ui.button("Utwórz krąg", this::showCreateForm));
-        col.addView(ui.button("Dołącz kodem", () -> showJoinForm(clipboardCode(), null)));
+        col.addView(ui.secondary("Dołącz kodem", () -> showJoinForm(clipboardCode(), null)));
         setBody(col);
     }
 
     private LinearLayout card(JSONObject c) {
-        LinearLayout card = column();
-        card.setBackground(ui.rounded(Ui.CARD));
-        card.setPadding(ui.dp(16), ui.dp(16), ui.dp(16), ui.dp(16));
-        LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(-1, -2);
-        p.topMargin = ui.dp(16);
-        card.setLayoutParams(p);
+        LinearLayout card = ui.card();
         String name = c.optString("name");
         String code = Format.code(c.optString("inviteCode"));
         TextView title = ui.text(name, 20, Ui.INK);
@@ -92,18 +87,14 @@ final class HomeScreen {
 
     private void showCreateForm(String problem) {
         LinearLayout col = column();
-        col.addView(ui.label("Nowy krąg", 28, Ui.INK));
-        EditText input = new EditText(activity);
-        input.setHint("Nazwa, np. Treningi");
-        input.setSingleLine(true);
+        col.addView(ui.title("Nowy krąg"));
+        EditText input = ui.input("Nazwa, np. Treningi");
         input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
         input.setFilters(new InputFilter[] {new InputFilter.LengthFilter(MAX_NAME)});
-        input.setTextColor(Ui.INK);
-        input.setTextSize(20);
         col.addView(input);
         if (problem != null) col.addView(ui.label(problem, 14, Ui.ACCENT));
         col.addView(ui.button("Utwórz", () -> create(input.getText().toString())));
-        col.addView(ui.button("Anuluj", this::show));
+        col.addView(ui.secondary("Anuluj", this::show));
         setBody(col);
     }
 
@@ -128,22 +119,18 @@ final class HomeScreen {
 
     private void showJoinForm(String prefill, String problem) {
         LinearLayout col = column();
-        col.addView(ui.label("Dołącz do kręgu", 28, Ui.INK));
+        col.addView(ui.title("Dołącz do kręgu"));
         col.addView(ui.label("Wklej kod od znajomego", 16, Ui.MUTED));
-        EditText input = new EditText(activity);
-        input.setHint("np. 2TNB-YY3T");
-        input.setSingleLine(true);
+        EditText input = ui.input("np. 2TNB-YY3T");
         input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
         input.setFilters(new InputFilter[] {new InputFilter.LengthFilter(20)});
-        input.setTextColor(Ui.INK);
-        input.setTextSize(22);
         input.setTypeface(Typeface.MONOSPACE);
         if (prefill != null) input.setText(prefill);
         col.addView(input);
         if (prefill != null && problem == null) col.addView(ui.label("Wstawiłem kod ze schowka", 14, Ui.MUTED));
         if (problem != null) col.addView(ui.label(problem, 14, Ui.ACCENT));
         col.addView(ui.button("Dołącz", () -> join(input.getText().toString())));
-        col.addView(ui.button("Anuluj", this::show));
+        col.addView(ui.secondary("Anuluj", this::show));
         setBody(col);
     }
 

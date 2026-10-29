@@ -69,18 +69,12 @@ public final class MainActivity extends Activity {
 
     private void showNameForm(String problem) {
         content.removeAllViews();
-        content.addView(ui.label("FriendPump", 32, Ui.INK));
+        content.addView(ui.title("FriendPump"));
         content.addView(ui.label("Razem łatwiej o codzienny nawyk", 16, Ui.MUTED));
-        EditText input = new EditText(this);
-        input.setHint("Twoje imię");
-        input.setSingleLine(true);
+        EditText input = ui.input("Twoje imię");
         input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
         input.setFilters(new InputFilter[] {new InputFilter.LengthFilter(MAX_NAME)});
-        input.setTextColor(Ui.INK);
-        input.setTextSize(20);
-        LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(-1, -2);
-        p.topMargin = ui.dp(32);
-        content.addView(input, p);
+        content.addView(input);
         if (problem != null) content.addView(ui.label(problem, 14, Ui.ACCENT));
         content.addView(ui.button("Zacznij", () -> {
             InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
