@@ -8,4 +8,29 @@ export default defineSchema({
     name: v.string(),
     createdAt: v.number(),
   }).index("by_secretHash", ["secretHash"]),
+
+  circles: defineTable({
+    name: v.string(),
+    inviteCode: v.string(), // 8 znaków bez mylących liter, bez myślnika
+    createdBy: v.id("users"),
+    createdAt: v.number(),
+  }).index("by_inviteCode", ["inviteCode"]),
+
+  members: defineTable({
+    circleId: v.id("circles"),
+    userId: v.id("users"),
+    joinedAt: v.number(),
+  })
+    .index("by_circle", ["circleId"])
+    .index("by_user", ["userId"])
+    .index("by_circle_user", ["circleId", "userId"]),
+
+  activities: defineTable({
+    circleId: v.id("circles"),
+    name: v.string(),
+    emoji: v.string(),
+    unit: v.union(v.literal("count"), v.literal("minutes"), v.literal("done")),
+    dailyTarget: v.number(),
+    archived: v.boolean(),
+  }).index("by_circle", ["circleId"]),
 });
