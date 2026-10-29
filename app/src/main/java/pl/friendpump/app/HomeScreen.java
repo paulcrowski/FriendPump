@@ -19,8 +19,6 @@ import org.json.JSONObject;
 
 /** Ekran główny po zalogowaniu: lista kręgów, tworzenie kręgu, udostępnianie kodu. */
 final class HomeScreen {
-    private static final int MAX_NAME = 30;
-
     private final Activity activity;
     private final Ui ui;
     private final String secret;
@@ -83,30 +81,8 @@ final class HomeScreen {
         activity.startActivity(Intent.createChooser(send, "Wyślij kod"));
     }
 
-    private void showCreateForm() { showCreateForm(null); }
-
-    private void showCreateForm(String problem) {
-        LinearLayout col = column();
-        col.addView(ui.title("Nowy krąg"));
-        EditText input = ui.input("Nazwa, np. Treningi");
-        input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
-        input.setFilters(new InputFilter[] {new InputFilter.LengthFilter(MAX_NAME)});
-        col.addView(input);
-        if (problem != null) col.addView(ui.label(problem, 14, Ui.ACCENT));
-        col.addView(ui.button("Utwórz", () -> create(input.getText().toString())));
-        col.addView(ui.secondary("Anuluj", this::show));
-        setBody(col);
-    }
-
-    private void create(String rawName) {
-        String name = rawName.trim();
-        if (name.isEmpty()) { showCreateForm("Wpisz nazwę kręgu"); return; }
-        setBody(ui.label("Tworzę krąg…", 18, Ui.INK));
-        Api.mutation("circles:create", args("name", name), r -> {
-            if (r.isOk()) show();
-            else if ("BAD_NAME".equals(r.error)) showCreateForm("Nazwa musi mieć od 1 do " + MAX_NAME + " znaków");
-            else showError("Nie udało się utworzyć kręgu (" + r.error + ")", () -> create(name));
-        });
+    private void showCreateForm() {
+        new CreateCircleForm(activity, ui, secret, host, this::show, this::show).show();
     }
 
     private String clipboardCode() {
