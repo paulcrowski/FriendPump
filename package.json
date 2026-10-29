@@ -18,10 +18,34 @@
     "check:diff-size": "node scripts/check-diff-size.js",
     "check:godfiles": "node scripts/check-godfiles.js",
     "check:project-gates": "node scripts/check-project-gates.js",
-    "check:import-boundaries": "node scripts/check-import-boundaries.js"
+    "check:import-boundaries": "node scripts/check-import-boundaries.js",
+    "start": "expo start",
+    "android": "expo start --android",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "jest",
+    "build": "expo export --platform android --output-dir build/export"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs"
+  "type": "commonjs",
+  "main": "index.ts",
+  "dependencies": {
+    "expo": "~58.0.21",
+    "expo-status-bar": "~58.0.4",
+    "react": "^19.3.0",
+    "react-native": "^0.88.0"
+  },
+  "devDependencies": {
+    "@testing-library/react-native": "^14.1.0",
+    "@types/jest": "^30.0.0",
+    "@types/react": "~19.3.0",
+    "eslint": "^9.39.5",
+    "eslint-config-expo": "^58.0.4",
+    "jest": "^30.5.2",
+    "jest-expo": "^58.0.12",
+    "react-test-renderer": "^19.3.0",
+    "typescript": "~6.0.3"
+  }
 }
