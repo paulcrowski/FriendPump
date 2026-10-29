@@ -33,4 +33,16 @@ export default defineSchema({
     dailyTarget: v.number(),
     archived: v.boolean(),
   }).index("by_circle", ["circleId"]),
+
+  // day = "YYYY-MM-DD" w czasie lokalnym telefonu.
+  checkins: defineTable({
+    activityId: v.id("activities"),
+    circleId: v.id("circles"),
+    userId: v.id("users"),
+    day: v.string(),
+    value: v.number(),
+    createdAt: v.number(),
+  })
+    .index("by_activity_day", ["activityId", "day"])
+    .index("by_activity_user_day", ["activityId", "userId", "day"]),
 });

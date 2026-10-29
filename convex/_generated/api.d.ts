@@ -9,6 +9,7 @@
  */
 
 import type * as auth from "../auth.js";
+import type * as checkins from "../checkins.js";
 import type * as circles from "../circles.js";
 import type * as users from "../users.js";
 
@@ -20,6 +21,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
+  checkins: typeof checkins;
   circles: typeof circles;
   users: typeof users;
 }>;
