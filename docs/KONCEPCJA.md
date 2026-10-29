@@ -34,11 +34,11 @@ Dlaczego kod, a nie klikalny link: przy samym APK link `https://…` otworzy prz
 
 | Warstwa | Wybór | Dlaczego |
 | --- | --- | --- |
-| Aplikacja | **Expo (React Native) + TypeScript** | Prawdziwa aplikacja na Androida, jeden język z backendem. |
-| APK | **Lokalny build**: `expo prebuild` + Gradle (`assembleRelease`) | Na Macu jest już Android SDK 35/36 i JDK 21 z Android Studio (jak w `spokojniej`). Bez chmury i bez konta Expo. Podpis lokalnym kluczem spoza repo. |
-| Backend + baza | **Convex** | Funkcje + baza w TypeScript, odświeżanie na żywo „za darmo” (zapytania są reaktywne). |
-| Tożsamość | Sekret urządzenia (32 losowe bajty) w `expo-secure-store`; w bazie tylko jego hash | Zero rejestracji. Każda funkcja Convex sprawdza, czy właściciel sekretu jest członkiem kręgu. |
-| Dystrybucja APK | Link z EAS albo GitHub Release | Instalacja „z nieznanych źródeł” — jednorazowa zgoda na telefonie. |
+| Aplikacja | **Natywny Android w Javie, bez bibliotek** (jak `spokojniej`) | Sprawdzony u Was sposób; UI w kodzie, bez Gradle i bez node_modules. |
+| APK | `scripts/build-apk.sh` (aapt2 + javac + d8 + apksigner) | Działa już w T1: `npm run build` daje `dist/FriendPump-<wersja>.apk`. Podpis lokalnym kluczem spoza repo. |
+| Backend + baza | **Convex** przez HTTP API (`/api/query`, `/api/mutation`) | Bez klienta JS: `HttpURLConnection` + `org.json` z Androida. „Na żywo” = odpytywanie co kilka sekund, gdy ekran jest otwarty. |
+| Tożsamość | Sekret urządzenia (32 losowe bajty) w prywatnych SharedPreferences; w bazie tylko jego hash | Zero rejestracji. Każda funkcja Convex sprawdza, czy właściciel sekretu jest członkiem kręgu. |
+| Dystrybucja APK | Plik wysłany przez komunikator albo GitHub Release | Instalacja „z nieznanych źródeł” — jednorazowa zgoda na telefonie. |
 
 ## Prywatność
 
@@ -74,12 +74,12 @@ Każdy task osobno, wg `AGENTS.md`: `task:new` → minimalna zmiana → dowód �
 | # | Task | Tryb | PASS |
 | --- | --- | --- | --- |
 | T0 | Repo: git init, `npm install`, hooki workflow, nazwa projektu | MINIMAL_FIX | `npm run gate:local` przechodzi |
-| T1 | Szkielet Expo + TS, ekran „FriendPump”, podgląd w Expo Go | FEATURE | aplikacja startuje na Twoim telefonie przez Expo Go |
+| T1 ✅ | Natywny szkielet Java + `build-apk.sh` (Expo odrzucone, nie działało lokalnie) | FEATURE | `npm run build` daje podpisany APK; instaluje się na telefonie |
 | T2 | Convex: schemat + tożsamość z sekretu urządzenia + ekran „Twoje imię” | FEATURE | test: bez sekretu / z obcym sekretem funkcje zwracają błąd |
 | T3 | Utwórz krąg → kod zaproszenia + 3 domyślne czynności + przycisk Udostępnij | FEATURE | po utworzeniu widać kod i 3 czynności; wiadomość udostępniania ma kod |
 | T4 | Dołącz kodem (+ podpowiedź ze schowka), lista moich kręgów | FEATURE | drugi telefon dołącza; zły kod = komunikat; ponownie bez duplikatu |
 | T5 | Ekran Dziś: dodaj wpis, cofnij, statusy wszystkich (na żywo) | FEATURE | wpis z telefonu A widać na B bez odświeżania |
-| T6 | Skrypt `scripts/build-apk.sh` (lokalny Gradle) + pierwszy APK i test we dwóch | release-build | APK instaluje się, T3–T5 działają na 2 telefonach |
+| T6 | Pierwszy APK z działającą synchronizacją i test we dwóch | release-build | APK instaluje się, T3–T5 działają na 2 telefonach |
 | T7 | Ekran Tydzień + seria dni | FEATURE | siatka zgadza się z danymi testowymi |
 | T8 | Dodawanie / archiwizacja czynności | FEATURE | nowa czynność widoczna dla wszystkich w kręgu |
 | T9 | APK dla wszystkich 4–5 osób | release-build | każdy ma aplikację i jest w swoim kręgu |
@@ -91,10 +91,10 @@ Po T6 możecie realnie testować we dwóch. T7–T9 to dopieszczenie i rozszerze
 - git działa (licencja Xcode zaakceptowana).
 - Android SDK: `~/Library/Android/sdk`, platformy 33–36.1, build-tools 35–37, adb.
 - JDK 21: `/Applications/Android Studio.app/Contents/jbr`.
-- Node 26. Konto Convex jest; konto Expo niepotrzebne.
+- Node 26 (tylko do skryptów workflow). Konto Convex jest.
 
-## Dlaczego nie natywna Java jak `spokojniej`
+## Decyzja o Expo (2026-10-29)
 
-`spokojniej` działa offline, bez bibliotek. FriendPump musi synchronizować kilka telefonów. Convex ma gotowego klienta dla React Native z odświeżaniem na żywo; w Javie bez Gradle trzeba by ręcznie pisać klienta HTTP, polling i parsowanie JSON. Expo daje mniej kodu przy tym samym lokalnym budowaniu APK.
+Najpierw wybrane Expo + Convex; Expo Go nie otworzyło aplikacji lokalnie, więc wróciliśmy do natywnej Javy jak w `spokojniej`. Skutek: Convex bez gotowego klienta, przez HTTP API.
 
 ## Poza MVP → ParkingLot.md
