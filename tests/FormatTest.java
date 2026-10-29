@@ -13,10 +13,14 @@ public final class FormatTest {
         eq(Format.target("count", 20), "20");
         eq(Format.target("minutes", 10), "10 min");
         eq(Format.target("done", 1), "✓");
+        eq(Format.extractCode("Dołącz do mojego kręgu „Treningi” w FriendPump. Kod zaproszenia: 2TNB-YY3T"), "2TNB-YY3T");
+        eq(Format.extractCode("kod 2tnb-yy3t"), "2TNB-YY3T");
+        eq(Format.extractCode("Cześć, co słychać?"), null);
+        eq(Format.extractCode(null), null);
         System.out.println("FormatTest PASS");
     }
 
     private static void eq(String actual, String expected) {
-        if (!expected.equals(actual)) throw new AssertionError("oczekiwano '" + expected + "', jest '" + actual + "'");
+        if (expected == null ? actual != null : !expected.equals(actual)) throw new AssertionError("oczekiwano '" + expected + "', jest '" + actual + "'");
     }
 }

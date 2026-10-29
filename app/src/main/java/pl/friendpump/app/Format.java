@@ -1,5 +1,8 @@
 package pl.friendpump.app;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /** Czyste funkcje formatowania tekstów (testowane bez Androida). */
 final class Format {
     private Format() { }
@@ -20,5 +23,14 @@ final class Format {
         if ("minutes".equals(unit)) return value + " min";
         if ("done".equals(unit)) return "✓";
         return String.valueOf(value);
+    }
+
+    private static final Pattern CODE_WITH_DASH = Pattern.compile("\\b([ABCDEFGHJKMNPQRSTUVWXYZ2-9]{4}-[ABCDEFGHJKMNPQRSTUVWXYZ2-9]{4})\\b");
+
+    /** Wyciąga kod XXXX-XXXX z wklejonej wiadomości; null, gdy go nie ma. */
+    static String extractCode(String text) {
+        if (text == null) return null;
+        Matcher m = CODE_WITH_DASH.matcher(text.toUpperCase());
+        return m.find() ? m.group(1) : null;
     }
 }

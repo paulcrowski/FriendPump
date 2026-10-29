@@ -1,6 +1,9 @@
 package pl.friendpump.app;
 
 import android.app.Activity;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Typeface;
 import android.text.InputFilter;
@@ -34,7 +37,7 @@ final class HomeScreen {
 
     void show() {
         setBody(ui.label("Ładuję kręgi…", 18, Ui.INK));
-        Api.query("circles:list", args(null), r -> {
+        Api.query("circles:list", args(null, null), r -> {
             if (!r.isOk()) { showError("Nie udało się pobrać kręgów (" + r.error + ")", this::show); return; }
             showCircles(r.value.optJSONArray("items"));
         });
@@ -46,6 +49,7 @@ final class HomeScreen {
         if (items.length() == 0) col.addView(ui.label("Nie masz jeszcze kręgu. Utwórz pierwszy i wyślij kod znajomym.", 16, Ui.MUTED));
         for (int i = 0; i < items.length(); i++) col.addView(card(items.optJSONObject(i)));
         col.addView(ui.button("Utwórz krąg", this::showCreateForm));
+        col.addView(ui.button("Dołącz kodem", () -> showJoinForm(clipboardCode(), null)));
         setBody(col);
     }
 
@@ -107,10 +111,51 @@ final class HomeScreen {
         String name = rawName.trim();
         if (name.isEmpty()) { showCreateForm("Wpisz nazwę kręgu"); return; }
         setBody(ui.label("Tworzę krąg…", 18, Ui.INK));
-        Api.mutation("circles:create", args(name), r -> {
+        Api.mutation("circles:create", args("name", name), r -> {
             if (r.isOk()) show();
             else if ("BAD_NAME".equals(r.error)) showCreateForm("Nazwa musi mieć od 1 do " + MAX_NAME + " znaków");
             else showError("Nie udało się utworzyć kręgu (" + r.error + ")", () -> create(name));
+        });
+    }
+
+    private String clipboardCode() {
+        ClipboardManager cm = (ClipboardManager) activity.getSystemService(Context.CLIPBOARD_SERVICE);
+        ClipData clip = cm == null ? null : cm.getPrimaryClip();
+        if (clip == null || clip.getItemCount() == 0) return null;
+        CharSequence text = clip.getItemAt(0).coerceToText(activity);
+        return Format.extractCode(text == null ? null : text.toString());
+    }
+
+    private void showJoinForm(String prefill, String problem) {
+        LinearLayout col = column();
+        col.addView(ui.label("Dołącz do kręgu", 28, Ui.INK));
+        col.addView(ui.label("Wklej kod od znajomego", 16, Ui.MUTED));
+        EditText input = new EditText(activity);
+        input.setHint("np. 2TNB-YY3T");
+        input.setSingleLine(true);
+        input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+        input.setFilters(new InputFilter[] {new InputFilter.LengthFilter(20)});
+        input.setTextColor(Ui.INK);
+        input.setTextSize(22);
+        input.setTypeface(Typeface.MONOSPACE);
+        if (prefill != null) input.setText(prefill);
+        col.addView(input);
+        if (prefill != null && problem == null) col.addView(ui.label("Wstawiłem kod ze schowka", 14, Ui.MUTED));
+        if (problem != null) col.addView(ui.label(problem, 14, Ui.ACCENT));
+        col.addView(ui.button("Dołącz", () -> join(input.getText().toString())));
+        col.addView(ui.button("Anuluj", this::show));
+        setBody(col);
+    }
+
+    private void join(String rawCode) {
+        String code = rawCode.trim();
+        if (code.isEmpty()) { showJoinForm(null, "Wpisz kod"); return; }
+        setBody(ui.label("Dołączam…", 18, Ui.INK));
+        Api.mutation("circles:join", args("code", code), r -> {
+            if (r.isOk()) show();
+            else if ("BAD_CODE".equals(r.error)) showJoinForm(code, "Kod ma 8 znaków, np. 2TNB-YY3T");
+            else if ("CIRCLE_NOT_FOUND".equals(r.error)) showJoinForm(code, "Nie ma takiego kręgu. Sprawdź kod.");
+            else showError("Nie udało się dołączyć (" + r.error + ")", () -> join(code));
         });
     }
 
@@ -135,10 +180,10 @@ final class HomeScreen {
         host.addView(scroll, new LinearLayout.LayoutParams(-1, -1));
     }
 
-    private JSONObject args(String name) {
+    private JSONObject args(String key, String value) {
         try {
             JSONObject json = new JSONObject().put("secret", secret);
-            return name == null ? json : json.put("name", name);
+            return key == null ? json : json.put(key, value);
         } catch (JSONException e) {
             throw new IllegalStateException(e);
         }
