@@ -88,3 +88,36 @@ export const list = query({
     return circles;
   },
 });
+
+// Kod może mieć myślnik, spacje i małe litery (wklejony z komunikatora).
+function normalizeCode(raw: string): string {
+  const code = raw.toUpperCase().replace(/[\s-]/g, "");
+  if (code.length !== CODE_LENGTH || [...code].some((c) => !CODE_ALPHABET.includes(c))) fail("BAD_CODE");
+  return code;
+}
+
+// Idempotentne: kolejne dołączenie tym samym kodem nie tworzy drugiego członka.
+export const join = mutation({
+  args: { secret: v.string(), code: v.string() },
+  handler: async (ctx, { secret, code }) => {
+    const user = await requireUser(ctx, secret);
+    const inviteCode = normalizeCode(code);
+    const circle = await ctx.db
+      .query("circles")
+      .withIndex("by_inviteCode", (q) => q.eq("inviteCode", inviteCode))
+      .unique();
+    if (!circle) fail("CIRCLE_NOT_FOUND");
+    const existing = await ctx.db
+      .query("members")
+      .withIndex("by_circle_user", (q) => q.eq("circleId", circle._id).eq("userId", user._id))
+      .unique();
+    if (!existing) {
+      await ctx.db.insert("members", { circleId: circle._id, userId: user._id, joinedAt: Date.now() });
+    }
+    const members = await ctx.db
+      .query("members")
+      .withIndex("by_circle", (q) => q.eq("circleId", circle._id))
+      .collect();
+    return { id: circle._id, name: circle.name, memberCount: members.length };
+  },
+});
