@@ -1,7 +1,7 @@
 {
-  "name": "workflow-clean",
+  "name": "friendpump",
   "version": "1.0.0",
-  "description": "Minimalny workflow do pracy z agentami AI: tryby pracy, scope lock i bramy PASS/FAIL.",
+  "description": "FriendPump - wspólne codzienne nawyki w kręgu znajomych.",
   "directories": {
     "doc": "docs"
   },
