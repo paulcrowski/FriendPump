@@ -2,6 +2,7 @@ package pl.friendpump.app;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.format.TextStyle;
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -51,5 +52,11 @@ final class Format {
         if (target <= 30) return new int[] {5, 10};
         if (target <= 100) return new int[] {10, 25};
         return new int[] {50, 100};
+    }
+
+    /** "Czw" - skrót dnia tygodnia. */
+    static String dayShort(LocalDate day) {
+        String s = day.getDayOfWeek().getDisplayName(TextStyle.SHORT, new Locale("pl", "PL")).replace(".", "");
+        return s.substring(0, 1).toUpperCase(new Locale("pl", "PL")) + s.substring(1);
     }
 }

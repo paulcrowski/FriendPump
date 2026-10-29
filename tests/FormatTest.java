@@ -22,6 +22,7 @@ public final class FormatTest {
         eq(java.util.Arrays.toString(Format.steps("count", 10)), "[2, 5]");
         eq(java.util.Arrays.toString(Format.steps("minutes", 30)), "[5, 10]");
         eq(java.util.Arrays.toString(Format.steps("done", 1)), "[]");
+        eq(Format.dayShort(java.time.LocalDate.of(2026, 10, 29)), "Czw");
         System.out.println("FormatTest PASS");
     }
 

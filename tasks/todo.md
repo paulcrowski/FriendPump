@@ -1,23 +1,23 @@
 # Current Task
 
-Task ID: 2026-10-29-ready-for-next-task
+Task ID: 2026-10-29-t7b-week-ui
 Task Date: 2026-10-29
-Task Status: READY_FOR_NEXT_TASK
+Task Status: ACTIVE
 
 ## Tryb pracy
-MINIMAL_FIX
+FEATURE
 
 Uzasadnienie trybu:
-Agent wybral najmniejszy bezpieczny tryb pracy.
+Task utworzony przez task lifecycle.
 
 ## Cel / Outcome
-Repo czeka na następny realny task.
+APK 0.6.0: w kręgu zakładki Dziś / Tydzień; Tydzień pokazuje siatkę 7 dni każdej osoby, serię dni i sumy tygodnia na czynność
 
 ## Kryteria sukcesu
-- Poprzedni task jest w archiwum.
+- obie zakładki działają i odświeżają się; siatka zgadza się z danymi serwera
 
 ## Priorytet / Blocker
-Największy blocker teraz: Repo czeka na następny realny task.
+Największy blocker teraz: APK 0.6.0: w kręgu zakładki Dziś / Tydzień; Tydzień pokazuje siatkę 7 dni każdej osoby, serię dni i sumy tygodnia na czynność
 Dowód blockera: polecenie użytkownika i aktualny task
 Czy ten task rusza blocker: TAK
 Jeśli NIE, powód: NOT_APPLICABLE
@@ -25,51 +25,169 @@ Dlaczego mimo to robimy teraz: nie dotyczy
 Warunek powrotu do blockera: nie dotyczy
 
 ## Kontekst dla agenta
-Moduł: workflow task lifecycle
+Moduł: android app
 Tryb zmiany: code-change
+Maksymalny zakres plików: allowlista z taska
 Dozwolone pliki do zmiany:
+- app/src/main/AndroidManifest.xml
+- app/src/main/java/pl/friendpump/app/WeekView.java
+- app/src/main/java/pl/friendpump/app/TodayScreen.java
+- app/src/main/java/pl/friendpump/app/Format.java
+- tests/FormatTest.java
 - tasks/todo.md
 - tasks/archive/**
-Kontrakty do przeczytania: tylko pliki potrzebne do taska
+Kontrakty do przeczytania: AGENTS.md oraz tylko potrzebne docs dla tego taska
+Pliki zakazane: wszystko poza allowlistą
 Czego nie ruszać: pliki poza zakresem
 
 ## Zakres
-Moduł: workflow task lifecycle
-Pliki: tasks/todo.md, tasks/archive/**
+Moduł: android app
+Pliki: app/src/main/AndroidManifest.xml, app/src/main/java/pl/friendpump/app/WeekView.java, app/src/main/java/pl/friendpump/app/TodayScreen.java, app/src/main/java/pl/friendpump/app/Format.java, tests/FormatTest.java, tasks/todo.md
+
+## Reprodukcja / dowód problemu
+Task utworzony z polecenia użytkownika albo przez zamknięcie poprzedniego taska.
 
 ## Escalation
 Czy brakuje danych do bezpiecznej zmiany?
 NIE
 
 Jeśli TAK:
-Status: BLOCKED_BY_MISSING_EVIDENCE
-Najmniejszy następny krok: audit albo test reprodukcyjny
+Brakujące dane: brak
+Czego nie da się potwierdzić: brak
+Ryzyko kodowania teraz: niskie po utrzymaniu scope locka
+Najmniejszy następny krok: wykonać najmniejszą zmianę z allowlisty
 
 ## Klasyfikacja
 REQUIRED
 
 Uzasadnienie:
-Zmiana jest wymagana dla aktualnego outcome.
+Zmiana jest wymagana dla aktualnego stanu workflow.
 
 ## Diagnoza
-Root cause: ustalic przed kodem.
-Dowód: wskazac przed finalnym PASS.
-Minimalny fix: najmniejszy diff w allowliscie.
-Test: najmniejsza komenda potwierdzajaca fix.
+Root cause: uwaga użytkownika: brak porównania, kto co zrobił w całym wyzwaniu.
+Dowód: APK 0.6.0 zbudowany; checkins:week pokryte 4 testami backendu; Format.dayShort ma test.
+Aktualny flow: Dziś/Tydzień: zakładka przełącza zapytanie checkins:today lub checkins:week (odświeżane co 5 s); WeekView rysuje siatkę 7 dni, serię i sumy tygodnia.
+
+## Granice
+Moduły dotknięte: android app
+Kontrakty dotknięte: do uzupełnienia, jeśli dotyczy.
+Poza zakresem: wszystko poza allowlistą.
+
+## Kontrakt
+INPUT: polecenie użytkownika i pliki z allowlisty.
+SUCCESS: spełnione kryteria sukcesu.
+ERRORS: brak dowodu, zmiana poza scope albo failujące gate'y.
+STATUSES: PASS / FAIL.
+SIDE EFFECTS: tylko zmiany w plikach z allowlisty.
+LOGS: komendy weryfikacyjne.
+TESTS: FormatTest (dayShort) + build; wygląd i dane sprawdza użytkownik.
+DONE: review ma konkretny wynik.
+
+## Failure modes
+Timeout: przerwać i pokazać ostatni bezpieczny stan.
+Null/missing data: nie zgadywać, użyć ESCALATION.
+Invalid schema: nie dotyczy, chyba że task dotyka danych.
+Duplicate request: sprawdzić idempotencję, jeśli task ma side effecty.
+Concurrent request: nie dotyczy, chyba że task dotyka runtime.
+Partial write: nie zostawiać pustego sukcesu.
+Worker crash: nie dotyczy, chyba że task dotyka workera.
+Retry loop: nie dodawać retry bez klasyfikacji błędów.
+Provider unavailable: nie dotyczy, chyba że task dotyka providera.
+
+## Guard Scope
+REQUIRED GUARDS:
+- trzymać się allowlisty.
+- uruchomić testy wskazane w tasku.
+
+NICE_TO_HAVE GUARDS:
+- pomysły poza zakresem zapisać do ParkingLot.md.
+
+OVERBUILD GUARDS:
+- nie tworzyć nowego subsystemu bez osobnego taska.
+
+ParkingLot.md updated:
+NOT_NEEDED
+
+## Runtime guards
+State machine: do uzupełnienia, jeśli dotyczy.
+Error classification: do uzupełnienia, jeśli dotyczy.
+Idempotency: do uzupełnienia, jeśli dotyczy.
+Single-flight: do uzupełnienia, jeśli dotyczy.
+Worker lock: do uzupełnienia, jeśli dotyczy.
+Circuit breaker: do uzupełnienia, jeśli dotyczy.
+Backpressure: do uzupełnienia, jeśli dotyczy.
+UI truth: do uzupełnienia, jeśli dotyczy.
+Observability: komendy weryfikacyjne jako dowód.
+
+## Code Structure Guard
+Czy dotykamy pliku >300 LOC?
+NIE
+
+Jeśli TAK:
+Plik: brak
+LOC: brak
+Dlaczego zmiana trafia tutaj: brak
+Czy plik ma wiele odpowiedzialności: brak
+Minimalny fix: brak
+Czy potrzebne wydzielenie odpowiedzialności: brak
+Ryzyko: brak
+
+## GOD_FILE_CHECK
+Wymagane, jeśli plik >500 LOC.
+
+Plik: brak
+LOC: brak
+Obecne odpowiedzialności: brak
+Czy task dokłada nową odpowiedzialność: brak
+Minimalny fix bez rozbicia: brak
+Małe wydzielenie odpowiedzialności: brak
+Ryzyko minimalnego fixu: brak
+Ryzyko wydzielenia: brak
+Rekomendacja: brak
+
+## Dependency Direction Guard
+Czy zmiana odwraca zależność?
+NIE
+
+Czy Business Logic importuje UI/DB/framework?
+NIE
+
+Czy adapter przecieka do core?
+NIE
+
+## Change Isolation
+Ile modułów dotyka zmiana: jeden wskazany obszar.
+Czy to naturalne: tak.
+Czy da się ograniczyć zmianę do jednego kontraktu: tak.
 
 ## Plan
-- [ ] Przeczytać tylko pliki potrzebne do zmiany.
-- [ ] Wykonać minimalny diff.
+- [ ] Przeczytać pliki z allowlisty.
+- [ ] Wykonać najmniejszą bezpieczną zmianę.
 - [ ] Uruchomić weryfikację.
 
 ## Weryfikacja
 Komendy:
-ustali agent przed zamknieciem taska
+npm run build; npm run gate:local
 Expected result: PASS.
 
+## Definition of Done
+- [x] test PASS
+- [x] build PASS albo NOT_NEEDED z uzasadnieniem
+- [ ] brak ERROR w logach
+- [ ] zmiana nie wychodzi poza zakres
+- [ ] brak refaktoru przy okazji
+- [ ] failure modes obsłużone
+- [ ] brak silent fallbacków
+- [ ] brak empty success
+- [ ] UI truth zachowane, jeśli dotyczy
+- [ ] dependency direction zachowany
+- [ ] brak cyklicznych zależności
+- [ ] duże pliki nie zostały powiększone bez uzasadnienia
+- [ ] implementowano tylko REQUIRED GUARDS
+
 ## Review / Wyniki
-Co zmieniono: nie zakończono.
-Jak sprawdzono: nie uruchomiono jeszcze.
+Co zmieniono: wersja 0.6.0; WeekView; zakładki w TodayScreen; Format.dayShort.
+Jak sprawdzono: build, testy JVM, gate:local.
 PASS / FAIL: PASS
-Ryzyka: brak finalnej weryfikacji.
+Ryzyka: wygląd niezweryfikowany wizualnie; nagłówek tygodnia bierze nazwę kręgu z poprzedniego widoku Dziś.
 Follow-up: brak.

@@ -31,6 +31,8 @@ final class TodayScreen {
         @Override public void run() { load(true); handler.postDelayed(this, POLL_MS); }
     };
     private String last = "";
+    private boolean weekTab;
+    private String circleName = "", circleCode = "";
 
     TodayScreen(Activity activity, Ui ui, String secret, LinearLayout host, String circleId, Runnable onBack) {
         this.activity = activity; this.ui = ui; this.secret = secret; this.host = host; this.circleId = circleId; this.onBack = onBack;
@@ -47,9 +49,9 @@ final class TodayScreen {
     private void leave() { stop(); onBack.run(); }
 
     private void load(boolean quiet) {
-        Api.query("checkins:today", args(null, 0), r -> {
+        Api.query(weekTab ? "checkins:week" : "checkins:today", args(null, 0), r -> {
             if (r.isOk()) {
-                String now = r.value.toString() + LocalDate.now();
+                String now = r.value.toString() + LocalDate.now() + weekTab;
                 if (!now.equals(last)) { last = now; render(r.value); }
             } else if (!quiet) {
                 LinearLayout col = new LinearLayout(activity);
@@ -70,15 +72,49 @@ final class TodayScreen {
         back.setPadding(0, ui.dp(8), ui.dp(24), ui.dp(8));
         back.setOnClickListener(x -> leave());
         col.addView(back);
-        JSONObject circle = v.optJSONObject("circle");
-        String code = Format.code(circle.optString("inviteCode"));
-        col.addView(ui.title(circle.optString("name")));
+        if (!weekTab) {
+            JSONObject circle = v.optJSONObject("circle");
+            circleName = circle.optString("name");
+            circleCode = Format.code(circle.optString("inviteCode"));
+        }
+        col.addView(ui.title(circleName));
         col.addView(ui.label(Format.dayLabel(LocalDate.now()), 15, Ui.MUTED));
-        col.addView(ui.secondary("Kod " + code + " · Udostępnij", () -> HomeScreen.share(activity, circle.optString("name"), code)));
-        JSONArray members = v.optJSONArray("members");
-        JSONArray acts = v.optJSONArray("activities");
-        for (int i = 0; i < acts.length(); i++) col.addView(activityCard(acts.optJSONObject(i), members));
+        col.addView(ui.secondary("Kod " + circleCode + " · Udostępnij", () -> HomeScreen.share(activity, circleName, circleCode)));
+        col.addView(tabs());
+        if (weekTab) {
+            col.addView(new WeekView(activity, ui).build(v));
+        } else {
+            JSONArray members = v.optJSONArray("members");
+            JSONArray acts = v.optJSONArray("activities");
+            for (int i = 0; i < acts.length(); i++) col.addView(activityCard(acts.optJSONObject(i), members));
+        }
         setBody(col);
+    }
+
+    private LinearLayout tabs() {
+        LinearLayout bar = new LinearLayout(activity);
+        bar.setBackground(ui.rounded(Ui.TRACK, 0, 22));
+        bar.setPadding(ui.dp(4), ui.dp(4), ui.dp(4), ui.dp(4));
+        bar.setLayoutParams(ui.margins(16));
+        bar.addView(tab("Dziś", !weekTab));
+        bar.addView(tab("Tydzień", weekTab));
+        return bar;
+    }
+
+    private TextView tab(String label, boolean selected) {
+        TextView t = ui.text(label, 15, selected ? Ui.INK : Ui.MUTED);
+        t.setGravity(Gravity.CENTER);
+        t.setTypeface(selected ? Typeface.DEFAULT_BOLD : Typeface.DEFAULT);
+        t.setPadding(0, ui.dp(9), 0, ui.dp(9));
+        if (selected) t.setBackground(ui.rounded(Ui.CARD, 0, 18));
+        t.setOnClickListener(x -> {
+            if (selected) return;
+            weekTab = !weekTab;
+            last = "";
+            load(false);
+        });
+        t.setLayoutParams(new LinearLayout.LayoutParams(0, -2, 1));
+        return t;
     }
 
     private LinearLayout activityCard(JSONObject a, JSONArray members) {
@@ -185,7 +221,7 @@ final class TodayScreen {
 
     private JSONObject args(String activityId, int value) {
         try {
-            JSONObject json = new JSONObject().put("secret", secret).put("day", LocalDate.now().toString());
+            JSONObject json = new JSONObject().put("secret", secret).put(weekTab && activityId == null ? "endDay" : "day", LocalDate.now().toString());
             if (activityId == null) return json.put("circleId", circleId);
             json.put("activityId", activityId);
             return value > 0 ? json.put("value", value) : json;
