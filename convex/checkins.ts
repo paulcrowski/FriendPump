@@ -95,3 +95,62 @@ export const today = query({
     return { circle: { id: circle._id, name: circle.name, inviteCode: circle.inviteCode }, members, activities: result };
   },
 });
+
+const WINDOW_DAYS = 30; // tyle dni wstecz liczymy serię
+
+function shiftDay(day: string, delta: number): string {
+  return new Date(Date.parse(day + "T00:00:00Z") + delta * DAY_MS).toISOString().slice(0, 10);
+}
+
+// Tydzień kręgu: dla każdej osoby ile czynności zrobione w każdym z 7 dni, seria i sumy tygodnia.
+export const week = query({
+  args: { secret: v.string(), circleId: v.id("circles"), endDay: v.string() },
+  handler: async (ctx, { secret, circleId, endDay }) => {
+    const user = await requireUser(ctx, secret);
+    checkDayFormat(endDay);
+    await requireMember(ctx, user._id, circleId);
+    const startDay = shiftDay(endDay, -(WINDOW_DAYS - 1));
+    const activities = (await ctx.db.query("activities").withIndex("by_circle", (q) => q.eq("circleId", circleId)).collect()).filter((a) => !a.archived);
+    const entries = await ctx.db
+      .query("checkins")
+      .withIndex("by_circle_day", (q) => q.eq("circleId", circleId).gte("day", startDay).lte("day", endDay))
+      .collect();
+    const sums = new Map<string, number>();
+    for (const e of entries) {
+      const key = `${e.userId}|${e.activityId}|${e.day}`;
+      sums.set(key, (sums.get(key) ?? 0) + e.value);
+    }
+    const days = Array.from({ length: 7 }, (_, i) => shiftDay(endDay, i - 6));
+    const memberRows = (await ctx.db.query("members").withIndex("by_circle", (q) => q.eq("circleId", circleId)).collect()).sort((a, b) => a.joinedAt - b.joinedAt);
+    const members = [];
+    for (const m of memberRows) {
+      const u = await ctx.db.get(m.userId);
+      if (!u) continue;
+      const doneOn = (day: string) => activities.filter((a) => (sums.get(`${u._id}|${a._id}|${day}`) ?? 0) >= a.dailyTarget).length;
+      const complete = (day: string) => activities.length > 0 && doneOn(day) === activities.length;
+      // Dzisiejszy niedokończony dzień nie przerywa serii.
+      let streak = 0;
+      for (let i = 0; i < WINDOW_DAYS; i++) {
+        if (complete(shiftDay(endDay, -i))) streak++;
+        else if (i > 0) break;
+      }
+      members.push({
+        id: u._id,
+        name: u.name,
+        isMe: u._id === user._id,
+        days: days.map((d) => ({ done: doneOn(d), of: activities.length })),
+        streak,
+        totals: activities.map((a) => ({
+          activityId: a._id,
+          total: days.reduce((s, d) => s + (sums.get(`${u._id}|${a._id}|${d}`) ?? 0), 0),
+        })),
+      });
+    }
+    members.sort((a, b) => Number(b.isMe) - Number(a.isMe));
+    return {
+      days,
+      activities: activities.map((a) => ({ id: a._id, name: a.name, emoji: a.emoji, unit: a.unit, dailyTarget: a.dailyTarget })),
+      members,
+    };
+  },
+});

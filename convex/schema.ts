@@ -44,5 +44,6 @@ export default defineSchema({
     createdAt: v.number(),
   })
     .index("by_activity_day", ["activityId", "day"])
-    .index("by_activity_user_day", ["activityId", "userId", "day"]),
+    .index("by_activity_user_day", ["activityId", "userId", "day"])
+    .index("by_circle_day", ["circleId", "day"]),
 });
