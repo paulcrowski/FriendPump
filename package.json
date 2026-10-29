@@ -18,7 +18,11 @@
     "check:diff-size": "node scripts/check-diff-size.js",
     "check:godfiles": "node scripts/check-godfiles.js",
     "check:project-gates": "node scripts/check-project-gates.js",
-    "check:import-boundaries": "node scripts/check-import-boundaries.js"
+    "check:import-boundaries": "node scripts/check-import-boundaries.js",
+    "lint": "bash scripts/build-apk.sh lint",
+    "typecheck": "bash scripts/build-apk.sh typecheck",
+    "test": "bash scripts/build-apk.sh test",
+    "build": "bash scripts/build-apk.sh build"
   },
   "keywords": [],
   "author": "",

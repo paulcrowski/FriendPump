@@ -11,3 +11,6 @@ signing/
 .env.local
 .convex/
 .DS_Store
+
+*.apk
+.android-test/
