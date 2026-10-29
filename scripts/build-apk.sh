@@ -52,8 +52,9 @@ grep -q "sdkVersion:'26'" "dist/apk-info-$VERSION.txt" || { echo "Zły minSdk w 
 grep -q "uses-permission: name='android.permission.INTERNET'" "dist/apk-info-$VERSION.txt" || { echo "Brak uprawnienia INTERNET w APK" >&2; exit 1; }
 grep -q "launchable-activity: name='$APP_ID.MainActivity'" "dist/apk-info-$VERSION.txt" || { echo "Brak launchera w APK" >&2; exit 1; }
 mkdir -p build/tests
-"$TASK_JAVA/bin/javac" -encoding UTF-8 -d build/tests app/src/main/java/pl/friendpump/app/Secret.java tests/SecretTest.java
+"$TASK_JAVA/bin/javac" -encoding UTF-8 -d build/tests app/src/main/java/pl/friendpump/app/Secret.java app/src/main/java/pl/friendpump/app/Format.java tests/SecretTest.java tests/FormatTest.java
 "$TASK_JAVA/bin/java" -cp build/tests pl.friendpump.app.SecretTest
+"$TASK_JAVA/bin/java" -cp build/tests pl.friendpump.app.FormatTest
 [ "$STEP" = test ] && { echo "test PASS"; exit 0; }
 
 shasum -a 256 "$APK" > "dist/SHA256SUMS-$VERSION"

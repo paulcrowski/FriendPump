@@ -9,6 +9,7 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -71,8 +72,11 @@ final class Api {
             return Result.fail("HTTP_" + httpStatus);
         }
         if ("success".equals(json.optString("status"))) {
-            JSONObject value = json.optJSONObject("value");
-            return value != null ? Result.ok(value) : Result.fail("BAD_RESPONSE");
+            Object value = json.opt("value");
+            if (value instanceof JSONObject) return Result.ok((JSONObject) value);
+            // Listy pakujemy w {"items": [...]}, żeby wynik zawsze był obiektem.
+            if (value instanceof JSONArray) return Result.ok(new JSONObject().put("items", value));
+            return Result.fail("BAD_RESPONSE");
         }
         JSONObject data = json.optJSONObject("errorData");
         String code = data == null ? "" : data.optString("code", "");

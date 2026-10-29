@@ -64,8 +64,7 @@ public final class MainActivity extends Activity {
 
     private void showReady(String name) {
         content.removeAllViews();
-        content.addView(ui.label("Cześć, " + name + "!", 32, Ui.INK));
-        content.addView(ui.label("Połączono z serwerem. Wkrótce: kręgi i wspólne czynności.", 16, Ui.MUTED));
+        new HomeScreen(this, ui, secret, content, name).show();
     }
 
     private void showNameForm(String problem) {
