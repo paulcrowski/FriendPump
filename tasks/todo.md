@@ -1,8 +1,8 @@
 # Current Task
 
-Task ID: 2026-10-29-ready-for-next-task
+Task ID: 2026-10-29-t5d3-lifecycle
 Task Date: 2026-10-29
-Task Status: READY_FOR_NEXT_TASK
+Task Status: ACTIVE
 
 ## Tryb pracy
 MINIMAL_FIX
@@ -11,13 +11,13 @@ Uzasadnienie trybu:
 Agent wybral najmniejszy bezpieczny tryb pracy.
 
 ## Cel / Outcome
-Repo czeka na następny realny task.
+Przycisk Wstecz wraca z ekranu Dziś do listy kręgów, a odświeżanie zatrzymuje się, gdy aplikacja jest w tle
 
 ## Kryteria sukcesu
-- Poprzedni task jest w archiwum.
+- build i gate przechodzą; MainActivity przekazuje onPause/onResume/Back do HomeScreen
 
 ## Priorytet / Blocker
-Największy blocker teraz: Repo czeka na następny realny task.
+Największy blocker teraz: Przycisk Wstecz wraca z ekranu Dziś do listy kręgów, a odświeżanie zatrzymuje się, gdy aplikacja jest w tle
 Dowód blockera: polecenie użytkownika i aktualny task
 Czy ten task rusza blocker: TAK
 Jeśli NIE, powód: NOT_APPLICABLE
@@ -25,17 +25,18 @@ Dlaczego mimo to robimy teraz: nie dotyczy
 Warunek powrotu do blockera: nie dotyczy
 
 ## Kontekst dla agenta
-Moduł: workflow task lifecycle
+Moduł: android app
 Tryb zmiany: code-change
 Dozwolone pliki do zmiany:
+- app/src/main/java/pl/friendpump/app/MainActivity.java
 - tasks/todo.md
 - tasks/archive/**
 Kontrakty do przeczytania: tylko pliki potrzebne do taska
 Czego nie ruszać: pliki poza zakresem
 
 ## Zakres
-Moduł: workflow task lifecycle
-Pliki: tasks/todo.md, tasks/archive/**
+Moduł: android app
+Pliki: app/src/main/java/pl/friendpump/app/MainActivity.java, tasks/todo.md
 
 ## Escalation
 Czy brakuje danych do bezpiecznej zmiany?
@@ -52,10 +53,10 @@ Uzasadnienie:
 Zmiana jest wymagana dla aktualnego outcome.
 
 ## Diagnoza
-Root cause: ustalic przed kodem.
-Dowód: wskazac przed finalnym PASS.
-Minimalny fix: najmniejszy diff w allowliscie.
-Test: najmniejsza komenda potwierdzajaca fix.
+Root cause: MainActivity nie przekazuje onPause/onResume/Wstecz do HomeScreen.
+Dowód: HomeScreen.stop/resume/back istnieją, ale nie są wywoływane (grep).
+Minimalny fix: trzy metody cyklu życia w MainActivity.
+Test: npm run build.
 
 ## Plan
 - [ ] Przeczytać tylko pliki potrzebne do zmiany.
@@ -64,12 +65,12 @@ Test: najmniejsza komenda potwierdzajaca fix.
 
 ## Weryfikacja
 Komendy:
-ustali agent przed zamknieciem taska
+npm run build; npm run gate:local
 Expected result: PASS.
 
 ## Review / Wyniki
-Co zmieniono: nie zakończono.
-Jak sprawdzono: nie uruchomiono jeszcze.
+Co zmieniono: MainActivity: onPause, onResume, onBackPressed przekazują do HomeScreen.
+Jak sprawdzono: build i gate:local.
 PASS / FAIL: PASS
-Ryzyka: brak finalnej weryfikacji.
+Ryzyka: brak.
 Follow-up: brak.

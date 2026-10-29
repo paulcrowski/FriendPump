@@ -21,6 +21,7 @@ public final class MainActivity extends Activity {
 
     private final Ui ui = new Ui(this);
     private LinearLayout content;
+    private HomeScreen home;
     private String secret;
 
     @Override public void onCreate(Bundle state) {
@@ -40,6 +41,21 @@ public final class MainActivity extends Activity {
         root.addView(footer, new LinearLayout.LayoutParams(-1, -2));
         setContentView(root);
         checkMe();
+    }
+
+    @Override protected void onPause() {
+        super.onPause();
+        if (home != null) home.stop();
+    }
+
+    @Override protected void onResume() {
+        super.onResume();
+        if (home != null) home.resume();
+    }
+
+    @SuppressWarnings("deprecation")
+    @Override public void onBackPressed() {
+        if (home == null || !home.back()) super.onBackPressed();
     }
 
     private void checkMe() {
@@ -64,7 +80,8 @@ public final class MainActivity extends Activity {
 
     private void showReady(String name) {
         content.removeAllViews();
-        new HomeScreen(this, ui, secret, content, name).show();
+        home = new HomeScreen(this, ui, secret, content, name);
+        home.show();
     }
 
     private void showNameForm(String problem) {
