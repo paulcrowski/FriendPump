@@ -7,6 +7,7 @@ import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.RippleDrawable;
 import android.text.InputType;
+import android.view.View;
 import android.view.Gravity;
 import android.widget.Button;
 import android.widget.EditText;
@@ -103,6 +104,51 @@ final class Ui {
         b.setBackground(new RippleDrawable(ColorStateList.valueOf(Color.argb(60, 0, 0, 0)), rounded(fill, 0, 26), null));
         b.setOnClickListener(v -> click.run());
         b.setLayoutParams(margins(14));
+        return b;
+    }
+
+    private static final int[] AVATARS = {
+        Color.rgb(224, 96, 42), Color.rgb(46, 158, 107), Color.rgb(66, 122, 214),
+        Color.rgb(170, 87, 190), Color.rgb(214, 156, 32), Color.rgb(207, 70, 110)};
+
+    /** Kółko z inicjałem; kolor zależy od imienia. */
+    TextView avatar(String name) {
+        TextView t = text(name.isEmpty() ? "?" : name.substring(0, 1).toUpperCase(), 16, Color.WHITE);
+        t.setTypeface(Typeface.DEFAULT_BOLD);
+        t.setGravity(Gravity.CENTER);
+        GradientDrawable circle = new GradientDrawable();
+        circle.setShape(GradientDrawable.OVAL);
+        circle.setColor(AVATARS[Math.abs(name.hashCode()) % AVATARS.length]);
+        t.setBackground(circle);
+        t.setLayoutParams(new LinearLayout.LayoutParams(dp(38), dp(38)));
+        return t;
+    }
+
+    /** Cienki pasek postępu (0..1). */
+    LinearLayout progress(double fraction, int color) {
+        LinearLayout bar = new LinearLayout(context);
+        bar.setWeightSum(1000);
+        bar.setBackground(rounded(TRACK, 0, 4));
+        int fill = (int) Math.round(Math.min(1.0, Math.max(0.0, fraction)) * 1000);
+        if (fill > 0) {
+            View v = new View(context);
+            v.setBackground(rounded(color, 0, 4));
+            bar.addView(v, new LinearLayout.LayoutParams(0, -1, Math.max(fill, 30)));
+        }
+        bar.setLayoutParams(new LinearLayout.LayoutParams(-1, dp(8)));
+        return bar;
+    }
+
+    /** Mały przycisk do rzędu akcji (równa szerokość). */
+    Button chip(String label, int fill, int textColor, Runnable click) {
+        Button b = pill(label, click, fill, textColor);
+        b.setMinHeight(dp(42));
+        b.setMinWidth(0);
+        b.setTextSize(15);
+        LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(0, dp(42), 1);
+        p.leftMargin = dp(4);
+        p.rightMargin = dp(4);
+        b.setLayoutParams(p);
         return b;
     }
 }

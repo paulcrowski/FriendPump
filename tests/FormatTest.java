@@ -17,6 +17,11 @@ public final class FormatTest {
         eq(Format.extractCode("kod 2tnb-yy3t"), "2TNB-YY3T");
         eq(Format.extractCode("Cześć, co słychać?"), null);
         eq(Format.extractCode(null), null);
+        eq(Format.dayLabel(java.time.LocalDate.of(2026, 10, 29)), "czwartek, 29 października");
+        eq(java.util.Arrays.toString(Format.steps("count", 20)), "[5, 10]");
+        eq(java.util.Arrays.toString(Format.steps("count", 10)), "[2, 5]");
+        eq(java.util.Arrays.toString(Format.steps("minutes", 30)), "[5, 10]");
+        eq(java.util.Arrays.toString(Format.steps("done", 1)), "[]");
         System.out.println("FormatTest PASS");
     }
 

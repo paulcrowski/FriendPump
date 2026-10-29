@@ -1,5 +1,8 @@
 package pl.friendpump.app;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -32,5 +35,21 @@ final class Format {
         if (text == null) return null;
         Matcher m = CODE_WITH_DASH.matcher(text.toUpperCase());
         return m.find() ? m.group(1) : null;
+    }
+
+    private static final DateTimeFormatter DAY_LABEL = DateTimeFormatter.ofPattern("EEEE, d MMMM", new Locale("pl", "PL"));
+
+    /** "czwartek, 29 października". */
+    static String dayLabel(LocalDate day) { return day.format(DAY_LABEL); }
+
+    /** Szybkie przyciski dodawania; dla "done" brak. */
+    static int[] steps(String unit, int target) {
+        if ("done".equals(unit)) return new int[0];
+        if ("minutes".equals(unit)) return new int[] {5, 10};
+        if (target <= 5) return new int[] {1, 2};
+        if (target <= 12) return new int[] {2, 5};
+        if (target <= 30) return new int[] {5, 10};
+        if (target <= 100) return new int[] {10, 25};
+        return new int[] {50, 100};
     }
 }
