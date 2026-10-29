@@ -49,7 +49,11 @@ APK="dist/FriendPump-$VERSION.apk"
 # test: APK ma oczekiwany pakiet, minSdk i launcher
 grep -q "package: name='$APP_ID'" "dist/apk-info-$VERSION.txt" || { echo "Zły package w APK" >&2; exit 1; }
 grep -q "sdkVersion:'26'" "dist/apk-info-$VERSION.txt" || { echo "Zły minSdk w APK" >&2; exit 1; }
+grep -q "uses-permission: name='android.permission.INTERNET'" "dist/apk-info-$VERSION.txt" || { echo "Brak uprawnienia INTERNET w APK" >&2; exit 1; }
 grep -q "launchable-activity: name='$APP_ID.MainActivity'" "dist/apk-info-$VERSION.txt" || { echo "Brak launchera w APK" >&2; exit 1; }
+mkdir -p build/tests
+"$TASK_JAVA/bin/javac" -encoding UTF-8 -d build/tests app/src/main/java/pl/friendpump/app/Secret.java tests/SecretTest.java
+"$TASK_JAVA/bin/java" -cp build/tests pl.friendpump.app.SecretTest
 [ "$STEP" = test ] && { echo "test PASS"; exit 0; }
 
 shasum -a 256 "$APK" > "dist/SHA256SUMS-$VERSION"
