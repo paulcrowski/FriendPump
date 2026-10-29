@@ -9,11 +9,34 @@ const CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 const CODE_LENGTH = 8;
 const CODE_ATTEMPTS = 8;
 
-const DEFAULT_ACTIVITIES = [
-  { name: "Pompki", emoji: "💪", unit: "count", dailyTarget: 20 },
-  { name: "Podciągnięcia", emoji: "🧗", unit: "count", dailyTarget: 10 },
-  { name: "Medytacja", emoji: "🧘", unit: "minutes", dailyTarget: 10 },
-] as const;
+const MAX_ACTIVITIES = 12;
+const MAX_TARGET = 1000;
+
+const activityInput = v.object({
+  name: v.string(),
+  emoji: v.string(),
+  unit: v.union(v.literal("count"), v.literal("minutes"), v.literal("done")),
+  dailyTarget: v.number(),
+});
+
+type ActivityInput = {
+  name: string;
+  emoji: string;
+  unit: "count" | "minutes" | "done";
+  dailyTarget: number;
+};
+
+function cleanActivities(list: ActivityInput[]): ActivityInput[] {
+  if (list.length < 1 || list.length > MAX_ACTIVITIES) fail("BAD_ACTIVITIES");
+  return list.map((a) => {
+    const name = a.name.trim();
+    const emoji = a.emoji.trim();
+    const target = a.unit === "done" ? 1 : a.dailyTarget;
+    const badTarget = !Number.isInteger(target) || target < 1 || target > MAX_TARGET;
+    if (name.length < 1 || name.length > MAX_NAME || emoji.length < 1 || emoji.length > 8 || badTarget) fail("BAD_ACTIVITIES");
+    return { name, emoji, unit: a.unit, dailyTarget: target };
+  });
+}
 
 function newCode(): string {
   const bytes = crypto.getRandomValues(new Uint8Array(CODE_LENGTH));
@@ -33,11 +56,12 @@ async function uniqueCode(ctx: MutationCtx): Promise<string> {
 }
 
 export const create = mutation({
-  args: { secret: v.string(), name: v.string() },
-  handler: async (ctx, { secret, name }) => {
+  args: { secret: v.string(), name: v.string(), activities: v.array(activityInput) },
+  handler: async (ctx, { secret, name, activities }) => {
     const user = await requireUser(ctx, secret);
     const cleaned = name.trim();
     if (cleaned.length < 1 || cleaned.length > MAX_NAME) fail("BAD_NAME");
+    const chosen = cleanActivities(activities);
     const now = Date.now();
     const inviteCode = await uniqueCode(ctx);
     const circleId = await ctx.db.insert("circles", {
@@ -47,7 +71,7 @@ export const create = mutation({
       createdAt: now,
     });
     await ctx.db.insert("members", { circleId, userId: user._id, joinedAt: now });
-    for (const a of DEFAULT_ACTIVITIES) {
+    for (const a of chosen) {
       await ctx.db.insert("activities", { circleId, ...a, archived: false });
     }
     return { id: circleId, name: cleaned, inviteCode };
