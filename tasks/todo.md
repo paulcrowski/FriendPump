@@ -1,23 +1,23 @@
 # Current Task
 
-Task ID: 2026-10-29-concept-native-java
+Task ID: 2026-10-29-ready-for-next-task
 Task Date: 2026-10-29
-Task Status: ACTIVE
+Task Status: READY_FOR_NEXT_TASK
 
 ## Tryb pracy
-CONTENT_FIX
+MINIMAL_FIX
 
 Uzasadnienie trybu:
 Agent wybral najmniejszy bezpieczny tryb pracy.
 
 ## Cel / Outcome
-Koncepcja opisuje natywną Javę + Convex HTTP zamiast Expo
+Repo czeka na następny realny task.
 
 ## Kryteria sukcesu
-- brak wzmianek o Expo poza historią; T1 oznaczony jako zrobiony
+- Poprzedni task jest w archiwum.
 
 ## Priorytet / Blocker
-Największy blocker teraz: Koncepcja opisuje natywną Javę + Convex HTTP zamiast Expo
+Największy blocker teraz: Repo czeka na następny realny task.
 Dowód blockera: polecenie użytkownika i aktualny task
 Czy ten task rusza blocker: TAK
 Jeśli NIE, powód: NOT_APPLICABLE
@@ -25,18 +25,17 @@ Dlaczego mimo to robimy teraz: nie dotyczy
 Warunek powrotu do blockera: nie dotyczy
 
 ## Kontekst dla agenta
-Moduł: workflow
+Moduł: workflow task lifecycle
 Tryb zmiany: code-change
 Dozwolone pliki do zmiany:
-- docs/KONCEPCJA.md
 - tasks/todo.md
 - tasks/archive/**
 Kontrakty do przeczytania: tylko pliki potrzebne do taska
 Czego nie ruszać: pliki poza zakresem
 
 ## Zakres
-Moduł: workflow
-Pliki: docs/KONCEPCJA.md, tasks/todo.md
+Moduł: workflow task lifecycle
+Pliki: tasks/todo.md, tasks/archive/**
 
 ## Escalation
 Czy brakuje danych do bezpiecznej zmiany?
@@ -53,10 +52,10 @@ Uzasadnienie:
 Zmiana jest wymagana dla aktualnego outcome.
 
 ## Diagnoza
-Root cause: koncepcja opisuje Expo, które zostało odrzucone.
-Dowód: grep Expo w docs/KONCEPCJA.md zostawia tylko sekcję historii i oznaczenie T1.
-Minimalny fix: podmiana wierszy tabeli technologii i T1/T6.
-Test: komenda albo visual/render proof dobrany przez agenta.
+Root cause: ustalic przed kodem.
+Dowód: wskazac przed finalnym PASS.
+Minimalny fix: najmniejszy diff w allowliscie.
+Test: najmniejsza komenda potwierdzajaca fix.
 
 ## Plan
 - [ ] Przeczytać tylko pliki potrzebne do zmiany.
@@ -65,12 +64,12 @@ Test: komenda albo visual/render proof dobrany przez agenta.
 
 ## Weryfikacja
 Komendy:
-grep -in expo docs/KONCEPCJA.md; npm run gate:local
+ustali agent przed zamknieciem taska
 Expected result: PASS.
 
 ## Review / Wyniki
-Co zmieniono: koncepcja opisuje natywną Javę i Convex HTTP, T1 zrobione.
-Jak sprawdzono: grep + gate:local.
-PASS / FAIL: Nie uruchomiono testów
-Ryzyka: brak.
+Co zmieniono: nie zakończono.
+Jak sprawdzono: nie uruchomiono jeszcze.
+PASS / FAIL: PASS
+Ryzyka: brak finalnej weryfikacji.
 Follow-up: brak.
