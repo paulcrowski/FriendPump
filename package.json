@@ -20,12 +20,21 @@
     "check:project-gates": "node scripts/check-project-gates.js",
     "check:import-boundaries": "node scripts/check-import-boundaries.js",
     "lint": "bash scripts/build-apk.sh lint",
-    "typecheck": "bash scripts/build-apk.sh typecheck",
-    "test": "bash scripts/build-apk.sh test",
+    "typecheck": "bash scripts/build-apk.sh typecheck && tsc -p convex --noEmit",
+    "test": "bash scripts/build-apk.sh test && vitest run",
     "build": "bash scripts/build-apk.sh build"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs"
+  "type": "commonjs",
+  "dependencies": {
+    "convex": "^1.47.0"
+  },
+  "devDependencies": {
+    "@edge-runtime/vm": "^5.0.0",
+    "convex-test": "^0.0.64",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.5"
+  }
 }

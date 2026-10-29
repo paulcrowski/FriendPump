@@ -49,6 +49,7 @@ const generatedPatterns = [
   /(^|\/)dist\//,
   /(^|\/)build\//,
   /(^|\/)coverage\//,
+  /(^|\/)_generated\//,
   /\.snap$/,
   /\.generated\./,
   /\.gen\./
