@@ -24,6 +24,7 @@ final class HomeScreen {
     private final String secret;
     private final LinearLayout host;
     private final String userName;
+    private TodayScreen today;
 
     HomeScreen(Activity activity, Ui ui, String secret, LinearLayout host, String userName) {
         this.activity = activity;
@@ -53,28 +54,41 @@ final class HomeScreen {
 
     private LinearLayout card(JSONObject c) {
         LinearLayout card = ui.card();
-        String name = c.optString("name");
-        String code = Format.code(c.optString("inviteCode"));
-        TextView title = ui.text(name, 20, Ui.INK);
+        String id = c.optString("id");
+        TextView title = ui.text(c.optString("name"), 20, Ui.INK);
         title.setTypeface(Typeface.DEFAULT_BOLD);
         card.addView(title);
-        card.addView(ui.text(Format.people(c.optInt("memberCount")), 14, Ui.MUTED));
+        StringBuilder emojis = new StringBuilder();
         JSONArray acts = c.optJSONArray("activities");
-        for (int i = 0; acts != null && i < acts.length(); i++) {
-            JSONObject a = acts.optJSONObject(i);
-            TextView line = ui.text(a.optString("emoji") + " " + a.optString("name") + " · " + Format.target(a.optString("unit"), a.optInt("dailyTarget")), 16, Ui.INK);
-            line.setPadding(0, ui.dp(6), 0, 0);
-            card.addView(line);
-        }
-        TextView codeView = ui.text("Kod: " + code, 22, Ui.ACCENT);
-        codeView.setTypeface(Typeface.MONOSPACE, Typeface.BOLD);
-        codeView.setPadding(0, ui.dp(16), 0, 0);
-        card.addView(codeView);
-        card.addView(ui.button("Udostępnij", () -> share(name, code)));
+        for (int i = 0; acts != null && i < acts.length(); i++) emojis.append(acts.optJSONObject(i).optString("emoji")).append(' ');
+        card.addView(ui.text(Format.people(c.optInt("memberCount")) + "  ·  " + emojis.toString().trim(), 15, Ui.MUTED));
+        TextView open = ui.text("Otwórz ›", 15, Ui.ACCENT);
+        open.setTypeface(Typeface.DEFAULT_BOLD);
+        open.setPadding(0, ui.dp(10), 0, 0);
+        card.addView(open);
+        card.setOnClickListener(v -> openToday(id));
         return card;
     }
 
-    private void share(String circleName, String code) {
+    private void openToday(String circleId) {
+        today = new TodayScreen(activity, ui, secret, host, circleId, () -> { today = null; show(); });
+        today.start();
+    }
+
+    /** Wywoływane z cyklu życia aktywności i przycisku wstecz. */
+    void stop() { if (today != null) today.stop(); }
+
+    void resume() { if (today != null) today.start(); }
+
+    boolean back() {
+        if (today == null) return false;
+        today.stop();
+        today = null;
+        show();
+        return true;
+    }
+
+    static void share(Activity activity, String circleName, String code) {
         Intent send = new Intent(Intent.ACTION_SEND);
         send.setType("text/plain");
         send.putExtra(Intent.EXTRA_TEXT, "Dołącz do mojego kręgu „" + circleName + "” w FriendPump. Kod zaproszenia: " + code);
