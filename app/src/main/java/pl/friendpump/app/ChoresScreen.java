@@ -3,6 +3,9 @@ package pl.friendpump.app;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
+import android.app.NotificationManager;
+import android.content.Context;
+import android.os.Build;
 import android.graphics.Typeface;
 import android.text.InputFilter;
 import android.view.Gravity;
@@ -51,6 +54,11 @@ final class ChoresScreen {
         LinearLayout col = column();
         col.addView(ui.title("Rzeczy na życie"));
         col.addView(ui.label("Cykliczne sprawy tylko dla Ciebie. Termin liczymy od dnia, w którym je zrobisz.", 15, Ui.MUTED));
+        Reminders.sync(activity, items);
+        NotificationManager nm = (NotificationManager) activity.getSystemService(Context.NOTIFICATION_SERVICE);
+        if (items.length() > 0 && nm != null && !nm.areNotificationsEnabled()) {
+            col.addView(ui.label("Powiadomienia są wyłączone, więc nie przypomnimy o terminach. Włącz je w ustawieniach telefonu.", 14, Ui.ACCENT));
+        }
         LocalDate today = LocalDate.now();
         for (int i = 0; i < items.length(); i++) col.addView(card(items.optJSONObject(i), today));
         col.addView(ui.button("Dodaj", this::showPicker));
@@ -156,11 +164,15 @@ final class ChoresScreen {
         if (name.isEmpty()) { showForm(emoji, name, cycle, "Wpisz nazwę"); return; }
         setBody(ui.label("Zapisuję…", 18, Ui.INK));
         Api.mutation("chores:create", args("name", name, "emoji", emoji, "everyMonths", cycle, "nextDue", due.toString(), "today", LocalDate.now().toString()), r -> {
-            if (r.isOk()) show();
+            if (r.isOk()) { askNotifications(); show(); }
             else if ("BAD_CHORE".equals(r.error)) showForm(emoji, name, cycle, "Sprawdź nazwę i termin (najdalej za 3 lata, najwyżej 50 rzeczy).");
             else if ("BAD_DAY".equals(r.error)) showForm(emoji, name, cycle, "Sprawdź datę i godzinę w telefonie.");
             else showError("Nie udało się zapisać (" + r.error + ")", () -> create(emoji, name, cycle, due));
         });
+    }
+
+    private void askNotifications() {
+        if (Build.VERSION.SDK_INT >= 33) activity.requestPermissions(new String[] {"android.permission.POST_NOTIFICATIONS"}, 1);
     }
 
     private void showError(String message, Runnable retry) {

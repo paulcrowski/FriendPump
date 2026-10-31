@@ -33,6 +33,11 @@ public final class FormatTest {
         eq(Format.due(t, t.plusDays(180)), "za 6 mies.");
         eq(Format.due(t, t.minusDays(1)), "zaległe od wczoraj");
         eq(Format.due(t, t.minusDays(5)), "zaległe 5 dni");
+        java.time.LocalDateTime now = java.time.LocalDateTime.of(2026, 10, 31, 12, 0);
+        eq(Format.reminderAt(now, t.plusDays(3)).toString(), "2026-11-03T09:00");
+        eq(Format.reminderAt(now, t).toString(), "2026-10-31T12:01");
+        eq(Format.reminderAt(now.withHour(7), t).toString(), "2026-10-31T09:00");
+        eq(Format.reminderAt(now, t.minusDays(9)).toString(), "2026-11-01T09:00");
         System.out.println("FormatTest PASS");
     }
 

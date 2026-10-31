@@ -1,6 +1,8 @@
 package pl.friendpump.app;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.TextStyle;
 import java.time.temporal.ChronoUnit;
@@ -78,5 +80,13 @@ final class Format {
         if (d >= 90) return "za " + d / 30 + " mies.";
         if (d > 1) return "za " + d + " dni";
         return d == -1 ? "zaległe od wczoraj" : "zaległe " + (-d) + " dni";
+    }
+
+    /** Kiedy przypomnieć o terminie: o 9:00 w dniu terminu; dziś po 9:00 za minutę; zaległe jutro o 9:00. */
+    static LocalDateTime reminderAt(LocalDateTime now, LocalDate due) {
+        LocalDate today = now.toLocalDate();
+        if (due.isBefore(today)) return today.plusDays(1).atTime(LocalTime.of(9, 0));
+        LocalDateTime at = due.atTime(LocalTime.of(9, 0));
+        return at.isAfter(now) ? at : now.plusMinutes(1);
     }
 }
