@@ -22,10 +22,10 @@ import org.json.JSONObject;
 final class ChoresScreen {
     private static final int MAX_NAME = 30;
     private static final int[] CYCLES = {3, 6, 12, 24};
-    // emoji, nazwa, cykl w miesiącach
+    // emoji, id tekstu z nazwą, cykl w miesiącach
     private static final Object[][] TEMPLATES = {
-        {"🚗", "Przegląd auta", 12}, {"🛞", "Wymiana opon", 6}, {"🩸", "Badania krwi", 12},
-        {"🦷", "Dentysta", 6}, {"🔥", "Przegląd kotła", 12}, {"🔋", "Baterie w czujnikach dymu", 12}};
+        {"🚗", R.string.tpl_car, 12}, {"🛞", R.string.tpl_tires, 6}, {"🩸", R.string.tpl_blood, 12},
+        {"🦷", R.string.tpl_dentist, 6}, {"🔥", R.string.tpl_boiler, 12}, {"🔋", R.string.tpl_smoke, 12}};
 
     private final Activity activity;
     private final Ui ui;
@@ -43,26 +43,26 @@ final class ChoresScreen {
 
     void show() {
         backAction = onClose;
-        setBody(ui.label("Ładuję…", 18, Ui.INK));
+        setBody(ui.label(ui.s(R.string.chores_loading), 18, Ui.INK));
         Api.query("chores:list", args(), r -> {
-            if (!r.isOk()) { showError("Nie udało się pobrać listy (" + r.error + ")", this::show); return; }
+            if (!r.isOk()) { showError(ui.s(R.string.chores_list_err, r.error), this::show); return; }
             showList(r.value.optJSONArray("items"));
         });
     }
 
     private void showList(JSONArray items) {
         LinearLayout col = column();
-        col.addView(ui.title("Rzeczy na życie"));
-        col.addView(ui.label("Cykliczne sprawy tylko dla Ciebie. Termin liczymy od dnia, w którym je zrobisz.", 15, Ui.MUTED));
+        col.addView(ui.title(ui.s(R.string.chores_title)));
+        col.addView(ui.label(ui.s(R.string.chores_intro), 15, Ui.MUTED));
         Reminders.sync(activity, items);
         NotificationManager nm = (NotificationManager) activity.getSystemService(Context.NOTIFICATION_SERVICE);
         if (items.length() > 0 && nm != null && !nm.areNotificationsEnabled()) {
-            col.addView(ui.label("Powiadomienia są wyłączone, więc nie przypomnimy o terminach. Włącz je w ustawieniach telefonu.", 14, Ui.ACCENT));
+            col.addView(ui.label(ui.s(R.string.chores_notif_off), 14, Ui.ACCENT));
         }
         LocalDate today = LocalDate.now();
         for (int i = 0; i < items.length(); i++) col.addView(card(items.optJSONObject(i), today));
-        col.addView(ui.button("Dodaj", this::showPicker));
-        col.addView(ui.secondary("Wróć", onClose));
+        col.addView(ui.button(ui.s(R.string.chores_add), this::showPicker));
+        col.addView(ui.secondary(ui.s(R.string.chores_back), onClose));
         setBody(col);
     }
 
@@ -74,54 +74,54 @@ final class ChoresScreen {
         TextView title = ui.text(c.optString("emoji") + "  " + name, 20, Ui.INK);
         title.setTypeface(Typeface.DEFAULT_BOLD);
         card.addView(title);
-        card.addView(ui.text(Format.cycle(c.optInt("everyMonths")) + "  ·  termin " + due, 15, Ui.MUTED));
+        card.addView(ui.text(ui.s(R.string.chores_due_line, Format.cycle(c.optInt("everyMonths")), due), 15, Ui.MUTED));
         TextView when = ui.text(Format.due(today, due), 16, late ? Ui.ACCENT : Ui.GOOD);
         when.setTypeface(Typeface.DEFAULT_BOLD);
         when.setPadding(0, ui.dp(6), 0, 0);
         card.addView(when);
         LinearLayout row = new LinearLayout(activity);
         row.setPadding(0, ui.dp(8), 0, 0);
-        row.addView(ui.chip("Zrobione", Ui.GOOD_SOFT, Ui.GOOD, () -> markDone(id)));
-        row.addView(ui.chip("Usuń", Ui.ACCENT_SOFT, Ui.ACCENT, () -> confirmArchive(id, name)));
+        row.addView(ui.chip(ui.s(R.string.chores_done), Ui.GOOD_SOFT, Ui.GOOD, () -> markDone(id)));
+        row.addView(ui.chip(ui.s(R.string.chores_delete), Ui.ACCENT_SOFT, Ui.ACCENT, () -> confirmArchive(id, name)));
         card.addView(row);
         return card;
     }
 
     private void markDone(String id) {
-        setBody(ui.label("Zapisuję…", 18, Ui.INK));
+        setBody(ui.label(ui.s(R.string.chores_saving), 18, Ui.INK));
         Api.mutation("chores:markDone", args("choreId", id, "day", LocalDate.now().toString()), r -> {
             if (r.isOk()) show();
-            else if ("BAD_DAY".equals(r.error)) showError("Sprawdź datę i godzinę w telefonie.", this::show);
-            else showError("Nie udało się zapisać (" + r.error + ")", () -> markDone(id));
+            else if ("BAD_DAY".equals(r.error)) showError(ui.s(R.string.chores_bad_clock), this::show);
+            else showError(ui.s(R.string.chores_save_err, r.error), () -> markDone(id));
         });
     }
 
     private void confirmArchive(String id, String name) {
-        new AlertDialog.Builder(activity).setMessage("Usunąć „" + name + "”?")
-            .setPositiveButton("Usuń", (d, w) -> archive(id)).setNegativeButton("Anuluj", null).show();
+        new AlertDialog.Builder(activity).setMessage(ui.s(R.string.chores_confirm_delete, name))
+            .setPositiveButton(ui.s(R.string.chores_delete), (d, w) -> archive(id)).setNegativeButton(ui.s(R.string.chores_cancel), null).show();
     }
 
     private void archive(String id) {
-        setBody(ui.label("Usuwam…", 18, Ui.INK));
+        setBody(ui.label(ui.s(R.string.chores_deleting), 18, Ui.INK));
         Api.mutation("chores:archive", args("choreId", id), r -> {
             if (r.isOk() || "CHORE_NOT_FOUND".equals(r.error)) show();
-            else showError("Nie udało się usunąć (" + r.error + ")", () -> archive(id));
+            else showError(ui.s(R.string.chores_delete_err, r.error), () -> archive(id));
         });
     }
 
     private void showPicker() {
         backAction = this::show;
         LinearLayout col = column();
-        col.addView(ui.title("Co dodać?"));
+        col.addView(ui.title(ui.s(R.string.chores_pick_title)));
         for (Object[] t : TEMPLATES) {
             LinearLayout card = ui.card();
-            card.addView(ui.text(t[0] + "  " + t[1], 18, Ui.INK));
+            card.addView(ui.text(t[0] + "  " + ui.s((Integer) t[1]), 18, Ui.INK));
             card.addView(ui.text(Format.cycle((Integer) t[2]), 14, Ui.MUTED));
-            card.setOnClickListener(v -> showForm((String) t[0], (String) t[1], (Integer) t[2], null));
+            card.setOnClickListener(v -> showForm((String) t[0], ui.s((Integer) t[1]), (Integer) t[2], null));
             col.addView(card);
         }
-        col.addView(ui.secondary("+ Własne", () -> showForm("📌", "", 12, null)));
-        col.addView(ui.secondary("Anuluj", this::show));
+        col.addView(ui.secondary(ui.s(R.string.chores_custom), () -> showForm("📌", "", 12, null)));
+        col.addView(ui.secondary(ui.s(R.string.chores_cancel), this::show));
         setBody(col);
     }
 
@@ -130,12 +130,12 @@ final class ChoresScreen {
         LocalDate[] due = {LocalDate.now().plusMonths(cycle)};
         int[] chosen = {cycle};
         LinearLayout col = column();
-        col.addView(ui.title(emoji + " Nowa rzecz"));
-        EditText input = ui.input("Nazwa, np. Przegląd auta");
+        col.addView(ui.title(ui.s(R.string.chores_form_title, emoji)));
+        EditText input = ui.input(ui.s(R.string.chores_name_hint));
         input.setFilters(new InputFilter[] {new InputFilter.LengthFilter(MAX_NAME)});
         input.setText(name);
         col.addView(input);
-        col.addView(ui.label("Jak często?", 15, Ui.MUTED));
+        col.addView(ui.label(ui.s(R.string.chores_how_often), 15, Ui.MUTED));
         LinearLayout cycles = new LinearLayout(activity);
         cycles.setGravity(Gravity.CENTER);
         col.addView(cycles);
@@ -147,27 +147,27 @@ final class ChoresScreen {
                 boolean on = m == chosen[0];
                 cycles.addView(ui.chip(Format.cycle(m), on ? Ui.ACCENT : Ui.ACCENT_SOFT, on ? Ui.BG : Ui.ACCENT, () -> { chosen[0] = m; redraw[0].run(); }));
             }
-            dueLabel.setText("Pierwszy termin: " + due[0]);
+            dueLabel.setText(ui.s(R.string.chores_first_due, due[0].toString()));
         };
         redraw[0].run();
         col.addView(dueLabel);
-        col.addView(ui.secondary("Zmień termin", () -> new DatePickerDialog(activity, (p, y, mo, d) -> { due[0] = LocalDate.of(y, mo + 1, d); redraw[0].run(); },
+        col.addView(ui.secondary(ui.s(R.string.chores_change_date), () -> new DatePickerDialog(activity, (p, y, mo, d) -> { due[0] = LocalDate.of(y, mo + 1, d); redraw[0].run(); },
             due[0].getYear(), due[0].getMonthValue() - 1, due[0].getDayOfMonth()).show()));
         if (problem != null) col.addView(ui.label(problem, 14, Ui.ACCENT));
-        col.addView(ui.button("Zapisz", () -> create(emoji, input.getText().toString(), chosen[0], due[0])));
-        col.addView(ui.secondary("Anuluj", this::showPicker));
+        col.addView(ui.button(ui.s(R.string.chores_save), () -> create(emoji, input.getText().toString(), chosen[0], due[0])));
+        col.addView(ui.secondary(ui.s(R.string.chores_cancel), this::showPicker));
         setBody(col);
     }
 
     private void create(String emoji, String rawName, int cycle, LocalDate due) {
         String name = rawName.trim();
-        if (name.isEmpty()) { showForm(emoji, name, cycle, "Wpisz nazwę"); return; }
-        setBody(ui.label("Zapisuję…", 18, Ui.INK));
+        if (name.isEmpty()) { showForm(emoji, name, cycle, ui.s(R.string.chores_name_required)); return; }
+        setBody(ui.label(ui.s(R.string.chores_saving), 18, Ui.INK));
         Api.mutation("chores:create", args("name", name, "emoji", emoji, "everyMonths", cycle, "nextDue", due.toString(), "today", LocalDate.now().toString()), r -> {
             if (r.isOk()) { askNotifications(); show(); }
-            else if ("BAD_CHORE".equals(r.error)) showForm(emoji, name, cycle, "Sprawdź nazwę i termin (najdalej za 3 lata, najwyżej 50 rzeczy).");
-            else if ("BAD_DAY".equals(r.error)) showForm(emoji, name, cycle, "Sprawdź datę i godzinę w telefonie.");
-            else showError("Nie udało się zapisać (" + r.error + ")", () -> create(emoji, name, cycle, due));
+            else if ("BAD_CHORE".equals(r.error)) showForm(emoji, name, cycle, ui.s(R.string.chores_bad_chore));
+            else if ("BAD_DAY".equals(r.error)) showForm(emoji, name, cycle, ui.s(R.string.chores_bad_clock));
+            else showError(ui.s(R.string.chores_save_err, r.error), () -> create(emoji, name, cycle, due));
         });
     }
 
@@ -178,8 +178,8 @@ final class ChoresScreen {
     private void showError(String message, Runnable retry) {
         LinearLayout col = column();
         col.addView(ui.label(message, 18, Ui.INK));
-        col.addView(ui.button("Spróbuj ponownie", retry));
-        col.addView(ui.secondary("Wróć", onClose));
+        col.addView(ui.button(ui.s(R.string.chores_retry), retry));
+        col.addView(ui.secondary(ui.s(R.string.chores_back), onClose));
         setBody(col);
     }
 

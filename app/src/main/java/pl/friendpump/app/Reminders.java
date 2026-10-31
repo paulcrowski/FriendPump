@@ -48,12 +48,12 @@ final class Reminders {
     static void notifyDue(Context ctx, String id, String emoji, String name) {
         NotificationManager nm = (NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE);
         if (nm == null) return;
-        nm.createNotificationChannel(new NotificationChannel(CHANNEL, "Rzeczy na życie", NotificationManager.IMPORTANCE_DEFAULT));
+        nm.createNotificationChannel(new NotificationChannel(CHANNEL, ctx.getString(R.string.chores_channel), NotificationManager.IMPORTANCE_DEFAULT));
         PendingIntent open = PendingIntent.getActivity(ctx, 0, new Intent(ctx, MainActivity.class), PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
         nm.notify(id.hashCode(), new android.app.Notification.Builder(ctx, CHANNEL)
             .setSmallIcon(android.R.drawable.ic_popup_reminder)
             .setContentTitle(emoji + " " + name)
-            .setContentText("Termin mija. Gdy zrobisz, odhacz w FriendPump.")
+            .setContentText(ctx.getString(R.string.chores_notif_text))
             .setContentIntent(open).setAutoCancel(true).build());
     }
 

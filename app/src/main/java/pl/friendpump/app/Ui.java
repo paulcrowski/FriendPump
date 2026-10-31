@@ -25,6 +25,8 @@ final class Ui {
 
     Ui(Context context) { this.context = context; }
 
+    String s(int id, Object... args) { return context.getString(id, args); }
+
     int dp(float value) { return (int) (value * context.getResources().getDisplayMetrics().density + .5f); }
 
     TextView text(String value, float size, int color) {
