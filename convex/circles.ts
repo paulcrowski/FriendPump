@@ -9,6 +9,8 @@ const CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 const CODE_LENGTH = 8;
 const CODE_ATTEMPTS = 8;
 
+// "Dziś" i "Tydzień" czytają wszystkich członków naraz; powyżej ok. 20 osób robi się wolno i nieczytelnie.
+const MAX_MEMBERS = 20;
 const MAX_ACTIVITIES = 12;
 const MAX_TARGET = 1000;
 
@@ -135,13 +137,14 @@ export const join = mutation({
       .query("members")
       .withIndex("by_circle_user", (q) => q.eq("circleId", circle._id).eq("userId", user._id))
       .unique();
-    if (!existing) {
-      await ctx.db.insert("members", { circleId: circle._id, userId: user._id, joinedAt: Date.now() });
-    }
-    const members = await ctx.db
+    const before = await ctx.db
       .query("members")
       .withIndex("by_circle", (q) => q.eq("circleId", circle._id))
       .collect();
-    return { id: circle._id, name: circle.name, memberCount: members.length };
+    if (!existing) {
+      if (before.length >= MAX_MEMBERS) fail("CIRCLE_FULL");
+      await ctx.db.insert("members", { circleId: circle._id, userId: user._id, joinedAt: Date.now() });
+    }
+    return { id: circle._id, name: circle.name, memberCount: before.length + (existing ? 0 : 1) };
   },
 });

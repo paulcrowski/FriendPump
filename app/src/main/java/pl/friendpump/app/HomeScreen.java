@@ -147,6 +147,7 @@ final class HomeScreen {
         Api.mutation("circles:join", args("code", code), r -> {
             if (r.isOk()) show();
             else if ("BAD_CODE".equals(r.error)) showJoinForm(code, ui.s(R.string.home_bad_code));
+            else if ("CIRCLE_FULL".equals(r.error)) showJoinForm(code, ui.s(R.string.home_circle_full));
             else if ("CIRCLE_NOT_FOUND".equals(r.error)) showJoinForm(code, ui.s(R.string.home_not_found));
             else showError(ui.s(R.string.home_join_err, r.error), () -> join(code));
         });

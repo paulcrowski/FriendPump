@@ -131,4 +131,5 @@
     <string name="groups_done_already">✓ Done this period</string>
     <string name="groups_load_err">Couldn\'t load groups (%1$s)</string>
     <string name="groups_act_err">Something went wrong (%1$s)</string>
+    <string name="home_circle_full">This circle is full (20 people maximum).</string>
 </resources>

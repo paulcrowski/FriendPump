@@ -131,3 +131,17 @@ describe("circles.join", () => {
   });
 });
 
+describe("circles.join limit", () => {
+  it("20 osób wchodzi, 21. dostaje CIRCLE_FULL, członek wchodzi ponownie", async () => {
+    const t = await setup();
+    const c = await t.mutation(api.circles.create, { secret: A, name: "Duży", activities: ALL });
+    const secretOf = (i: number) => i.toString(16).padStart(64, "0");
+    for (let i = 1; i <= 20; i++) {
+      await t.mutation(api.users.register, { secret: secretOf(i), name: `U${i}` });
+    }
+    for (let i = 1; i <= 19; i++) await t.mutation(api.circles.join, { secret: secretOf(i), code: c.inviteCode });
+    expect(await codeOf(t.mutation(api.circles.join, { secret: secretOf(20), code: c.inviteCode }))).toBe("CIRCLE_FULL");
+    const again = await t.mutation(api.circles.join, { secret: secretOf(3), code: c.inviteCode });
+    expect(again.memberCount).toBe(20);
+  });
+});
