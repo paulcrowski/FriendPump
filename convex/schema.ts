@@ -46,4 +46,17 @@ export default defineSchema({
     .index("by_activity_day", ["activityId", "day"])
     .index("by_activity_user_day", ["activityId", "userId", "day"])
     .index("by_circle_day", ["circleId", "day"]),
+
+  // Zadania cykliczne osoby (przegląd auta, opony, badania). Prywatne: widzi je tylko właściciel.
+  // nextDue / lastDone = "YYYY-MM-DD". Źródło prawdy o terminie: ten rekord, nic nie jest liczone po stronie telefonu.
+  chores: defineTable({
+    userId: v.id("users"),
+    name: v.string(),
+    emoji: v.string(),
+    everyMonths: v.number(), // 1..24; 6 = dwa razy w roku, 12 = raz w roku
+    nextDue: v.string(),
+    lastDone: v.optional(v.string()),
+    archived: v.boolean(),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]),
 });
