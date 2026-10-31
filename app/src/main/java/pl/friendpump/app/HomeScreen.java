@@ -25,6 +25,7 @@ final class HomeScreen {
     private final LinearLayout host;
     private final String userName;
     private TodayScreen today;
+    private ChoresScreen chores;
 
     HomeScreen(Activity activity, Ui ui, String secret, LinearLayout host, String userName) {
         this.activity = activity;
@@ -49,6 +50,7 @@ final class HomeScreen {
         for (int i = 0; i < items.length(); i++) col.addView(card(items.optJSONObject(i)));
         col.addView(ui.button("Utwórz krąg", this::showCreateForm));
         col.addView(ui.secondary("Dołącz kodem", () -> showJoinForm(clipboardCode(), null)));
+        col.addView(ui.secondary("🗓 Rzeczy na życie", this::openChores));
         setBody(col);
     }
 
@@ -75,12 +77,18 @@ final class HomeScreen {
         today.start();
     }
 
+    private void openChores() {
+        chores = new ChoresScreen(activity, ui, secret, host, () -> { chores = null; show(); });
+        chores.show();
+    }
+
     /** Wywoływane z cyklu życia aktywności i przycisku wstecz. */
     void stop() { if (today != null) today.stop(); }
 
     void resume() { if (today != null) today.start(); }
 
     boolean back() {
+        if (chores != null) { chores.back(); return true; }
         if (today == null) return false;
         today.stop();
         today = null;

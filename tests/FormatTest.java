@@ -23,6 +23,16 @@ public final class FormatTest {
         eq(java.util.Arrays.toString(Format.steps("minutes", 30)), "[5, 10]");
         eq(java.util.Arrays.toString(Format.steps("done", 1)), "[]");
         eq(Format.dayShort(java.time.LocalDate.of(2026, 10, 29)), "Czw");
+        eq(Format.cycle(12), "raz w roku");
+        eq(Format.cycle(6), "2 razy w roku");
+        eq(Format.cycle(3), "co 3 mies.");
+        java.time.LocalDate t = java.time.LocalDate.of(2026, 10, 31);
+        eq(Format.due(t, t), "dziś");
+        eq(Format.due(t, t.plusDays(1)), "jutro");
+        eq(Format.due(t, t.plusDays(12)), "za 12 dni");
+        eq(Format.due(t, t.plusDays(180)), "za 6 mies.");
+        eq(Format.due(t, t.minusDays(1)), "zaległe od wczoraj");
+        eq(Format.due(t, t.minusDays(5)), "zaległe 5 dni");
         System.out.println("FormatTest PASS");
     }
 

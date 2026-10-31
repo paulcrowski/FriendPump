@@ -3,6 +3,7 @@ package pl.friendpump.app;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.TextStyle;
+import java.time.temporal.ChronoUnit;
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -58,5 +59,24 @@ final class Format {
     static String dayShort(LocalDate day) {
         String s = day.getDayOfWeek().getDisplayName(TextStyle.SHORT, new Locale("pl", "PL")).replace(".", "");
         return s.substring(0, 1).toUpperCase(new Locale("pl", "PL")) + s.substring(1);
+    }
+
+    /** Cykl zadania w miesiącach: "raz w roku", "2 razy w roku", "co 3 mies.". */
+    static String cycle(int months) {
+        if (months == 1) return "co miesiąc";
+        if (months == 6) return "2 razy w roku";
+        if (months == 12) return "raz w roku";
+        if (months == 24) return "co 2 lata";
+        return "co " + months + " mies.";
+    }
+
+    /** Ile zostało do terminu; po terminie "zaległe ...". */
+    static String due(LocalDate today, LocalDate due) {
+        long d = ChronoUnit.DAYS.between(today, due);
+        if (d == 0) return "dziś";
+        if (d == 1) return "jutro";
+        if (d >= 90) return "za " + d / 30 + " mies.";
+        if (d > 1) return "za " + d + " dni";
+        return d == -1 ? "zaległe od wczoraj" : "zaległe " + (-d) + " dni";
     }
 }
