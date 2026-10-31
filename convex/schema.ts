@@ -59,4 +59,24 @@ export default defineSchema({
     archived: v.boolean(),
     createdAt: v.number(),
   }).index("by_user", ["userId"]),
+
+  // Otwarte grupy (np. "tires") mają stały katalog w groups.ts. Nie ma listy członków dla innych:
+  // widać tylko liczniki. groupMembers służy do sprawdzenia "czy ja jestem" i jednego wykonania na okres.
+  groupMembers: defineTable({
+    groupKey: v.string(),
+    userId: v.id("users"),
+    joinedAt: v.number(),
+    lastDonePeriod: v.optional(v.string()),
+  })
+    .index("by_group_user", ["groupKey", "userId"])
+    .index("by_user", ["userId"]),
+
+  // Licznik dzielony na shardy, żeby tysiące równoczesnych zapisów nie biły w jeden dokument.
+  // kind = "members" albo "done:<okres>". Wartość = suma n po shardach.
+  groupCounters: defineTable({
+    groupKey: v.string(),
+    kind: v.string(),
+    shard: v.number(),
+    n: v.number(),
+  }).index("by_group_kind_shard", ["groupKey", "kind", "shard"]),
 });
