@@ -19,7 +19,13 @@ final class Format {
         return raw.length() == 8 ? raw.substring(0, 4) + "-" + raw.substring(4) : raw;
     }
 
+    /** Język tekstów z Format: angielski, gdy telefon jest po angielsku, w przeciwnym razie polski. */
+    static boolean en() { return "en".equals(Locale.getDefault().getLanguage()); }
+
+    private static Locale loc() { return en() ? Locale.ENGLISH : Locale.forLanguageTag("pl-PL"); }
+
     static String people(int n) {
+        if (en()) return n == 1 ? "1 person" : n + " people";
         if (n == 1) return "1 osoba";
         int last = n % 10, lastTwo = n % 100;
         boolean few = last >= 2 && last <= 4 && !(lastTwo >= 12 && lastTwo <= 14);
@@ -41,10 +47,10 @@ final class Format {
         return m.find() ? m.group(1) : null;
     }
 
-    private static final DateTimeFormatter DAY_LABEL = DateTimeFormatter.ofPattern("EEEE, d MMMM", new Locale("pl", "PL"));
-
-    /** "czwartek, 29 października". */
-    static String dayLabel(LocalDate day) { return day.format(DAY_LABEL); }
+    /** "czwartek, 29 października" / "Thursday, October 29". */
+    static String dayLabel(LocalDate day) {
+        return day.format(DateTimeFormatter.ofPattern(en() ? "EEEE, MMMM d" : "EEEE, d MMMM", loc()));
+    }
 
     /** Szybkie przyciski dodawania; dla "done" brak. */
     static int[] steps(String unit, int target) {
@@ -59,12 +65,19 @@ final class Format {
 
     /** "Czw" - skrót dnia tygodnia. */
     static String dayShort(LocalDate day) {
-        String s = day.getDayOfWeek().getDisplayName(TextStyle.SHORT, new Locale("pl", "PL")).replace(".", "");
-        return s.substring(0, 1).toUpperCase(new Locale("pl", "PL")) + s.substring(1);
+        String s = day.getDayOfWeek().getDisplayName(TextStyle.SHORT, loc()).replace(".", "");
+        return s.substring(0, 1).toUpperCase(loc()) + s.substring(1);
     }
 
     /** Cykl zadania w miesiącach: "raz w roku", "2 razy w roku", "co 3 mies.". */
     static String cycle(int months) {
+        if (en()) {
+            if (months == 1) return "monthly";
+            if (months == 6) return "twice a year";
+            if (months == 12) return "yearly";
+            if (months == 24) return "every 2 years";
+            return "every " + months + " mo.";
+        }
         if (months == 1) return "co miesiąc";
         if (months == 6) return "2 razy w roku";
         if (months == 12) return "raz w roku";
@@ -75,6 +88,13 @@ final class Format {
     /** Ile zostało do terminu; po terminie "zaległe ...". */
     static String due(LocalDate today, LocalDate due) {
         long d = ChronoUnit.DAYS.between(today, due);
+        if (en()) {
+            if (d == 0) return "today";
+            if (d == 1) return "tomorrow";
+            if (d >= 90) return "in " + d / 30 + " mo.";
+            if (d > 1) return "in " + d + " days";
+            return d == -1 ? "overdue since yesterday" : "overdue " + (-d) + " days";
+        }
         if (d == 0) return "dziś";
         if (d == 1) return "jutro";
         if (d >= 90) return "za " + d / 30 + " mies.";
