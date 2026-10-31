@@ -64,6 +64,9 @@ final class GroupsScreen {
         TextView stats = ui.text(ui.s(R.string.groups_stats, nf.format(g.optLong("members")), nf.format(g.optLong("doneThisPeriod"))), 15, Ui.INK);
         stats.setPadding(0, ui.dp(6), 0, 0);
         card.addView(stats);
+        // Zrobiło może przekraczać członków (część wyszła po odhaczeniu): pasek jest wtedy pełny.
+        long members = g.optLong("members");
+        card.addView(ui.progress(members == 0 ? 0 : (double) g.optLong("doneThisPeriod") / members, Ui.GOOD));
         LinearLayout row = new LinearLayout(activity);
         row.setPadding(0, ui.dp(8), 0, 0);
         if (!joined) {
