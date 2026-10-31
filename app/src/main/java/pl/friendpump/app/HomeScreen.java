@@ -36,21 +36,21 @@ final class HomeScreen {
     }
 
     void show() {
-        setBody(ui.label("Ładuję kręgi…", 18, Ui.INK));
+        setBody(ui.label(ui.s(R.string.home_loading), 18, Ui.INK));
         Api.query("circles:list", args(null, null), r -> {
-            if (!r.isOk()) { showError("Nie udało się pobrać kręgów (" + r.error + ")", this::show); return; }
+            if (!r.isOk()) { showError(ui.s(R.string.home_list_err, r.error), this::show); return; }
             showCircles(r.value.optJSONArray("items"));
         });
     }
 
     private void showCircles(JSONArray items) {
         LinearLayout col = column();
-        col.addView(ui.title("Cześć, " + userName + "!"));
-        if (items.length() == 0) col.addView(ui.label("Nie masz jeszcze kręgu. Utwórz pierwszy i wyślij kod znajomym.", 16, Ui.MUTED));
+        col.addView(ui.title(ui.s(R.string.home_hello, userName)));
+        if (items.length() == 0) col.addView(ui.label(ui.s(R.string.home_no_circles), 16, Ui.MUTED));
         for (int i = 0; i < items.length(); i++) col.addView(card(items.optJSONObject(i)));
-        col.addView(ui.button("Utwórz krąg", this::showCreateForm));
-        col.addView(ui.secondary("Dołącz kodem", () -> showJoinForm(clipboardCode(), null)));
-        col.addView(ui.secondary("🗓 Rzeczy na życie", this::openChores));
+        col.addView(ui.button(ui.s(R.string.home_create), this::showCreateForm));
+        col.addView(ui.secondary(ui.s(R.string.home_join_btn), () -> showJoinForm(clipboardCode(), null)));
+        col.addView(ui.secondary(ui.s(R.string.home_chores_btn), this::openChores));
         setBody(col);
     }
 
@@ -64,7 +64,7 @@ final class HomeScreen {
         JSONArray acts = c.optJSONArray("activities");
         for (int i = 0; acts != null && i < acts.length(); i++) emojis.append(acts.optJSONObject(i).optString("emoji")).append(' ');
         card.addView(ui.text(Format.people(c.optInt("memberCount")) + "  ·  " + emojis.toString().trim(), 15, Ui.MUTED));
-        TextView open = ui.text("Otwórz ›", 15, Ui.ACCENT);
+        TextView open = ui.text(ui.s(R.string.home_open), 15, Ui.ACCENT);
         open.setTypeface(Typeface.DEFAULT_BOLD);
         open.setPadding(0, ui.dp(10), 0, 0);
         card.addView(open);
@@ -99,8 +99,8 @@ final class HomeScreen {
     static void share(Activity activity, String circleName, String code) {
         Intent send = new Intent(Intent.ACTION_SEND);
         send.setType("text/plain");
-        send.putExtra(Intent.EXTRA_TEXT, "Dołącz do mojego kręgu „" + circleName + "” w FriendPump. Kod zaproszenia: " + code);
-        activity.startActivity(Intent.createChooser(send, "Wyślij kod"));
+        send.putExtra(Intent.EXTRA_TEXT, activity.getString(R.string.home_share_text, circleName, code));
+        activity.startActivity(Intent.createChooser(send, activity.getString(R.string.home_share_chooser)));
     }
 
     private void showCreateForm() {
@@ -117,37 +117,37 @@ final class HomeScreen {
 
     private void showJoinForm(String prefill, String problem) {
         LinearLayout col = column();
-        col.addView(ui.title("Dołącz do kręgu"));
-        col.addView(ui.label("Wklej kod od znajomego", 16, Ui.MUTED));
-        EditText input = ui.input("np. 2TNB-YY3T");
+        col.addView(ui.title(ui.s(R.string.home_join_title)));
+        col.addView(ui.label(ui.s(R.string.home_paste_code), 16, Ui.MUTED));
+        EditText input = ui.input(ui.s(R.string.home_code_hint));
         input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
         input.setFilters(new InputFilter[] {new InputFilter.LengthFilter(20)});
         input.setTypeface(Typeface.MONOSPACE);
         if (prefill != null) input.setText(prefill);
         col.addView(input);
-        if (prefill != null && problem == null) col.addView(ui.label("Wstawiłem kod ze schowka", 14, Ui.MUTED));
+        if (prefill != null && problem == null) col.addView(ui.label(ui.s(R.string.home_pasted), 14, Ui.MUTED));
         if (problem != null) col.addView(ui.label(problem, 14, Ui.ACCENT));
-        col.addView(ui.button("Dołącz", () -> join(input.getText().toString())));
-        col.addView(ui.secondary("Anuluj", this::show));
+        col.addView(ui.button(ui.s(R.string.home_join), () -> join(input.getText().toString())));
+        col.addView(ui.secondary(ui.s(R.string.common_cancel), this::show));
         setBody(col);
     }
 
     private void join(String rawCode) {
         String code = rawCode.trim();
-        if (code.isEmpty()) { showJoinForm(null, "Wpisz kod"); return; }
-        setBody(ui.label("Dołączam…", 18, Ui.INK));
+        if (code.isEmpty()) { showJoinForm(null, ui.s(R.string.home_enter_code)); return; }
+        setBody(ui.label(ui.s(R.string.home_joining), 18, Ui.INK));
         Api.mutation("circles:join", args("code", code), r -> {
             if (r.isOk()) show();
-            else if ("BAD_CODE".equals(r.error)) showJoinForm(code, "Kod ma 8 znaków, np. 2TNB-YY3T");
-            else if ("CIRCLE_NOT_FOUND".equals(r.error)) showJoinForm(code, "Nie ma takiego kręgu. Sprawdź kod.");
-            else showError("Nie udało się dołączyć (" + r.error + ")", () -> join(code));
+            else if ("BAD_CODE".equals(r.error)) showJoinForm(code, ui.s(R.string.home_bad_code));
+            else if ("CIRCLE_NOT_FOUND".equals(r.error)) showJoinForm(code, ui.s(R.string.home_not_found));
+            else showError(ui.s(R.string.home_join_err, r.error), () -> join(code));
         });
     }
 
     private void showError(String message, Runnable retry) {
         LinearLayout col = column();
         col.addView(ui.label(message, 18, Ui.INK));
-        col.addView(ui.button("Spróbuj ponownie", retry));
+        col.addView(ui.button(ui.s(R.string.common_retry), retry));
         setBody(col);
     }
 

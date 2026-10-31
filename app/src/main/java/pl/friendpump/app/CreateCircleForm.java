@@ -46,33 +46,33 @@ final class CreateCircleForm {
 
     CreateCircleForm(Activity activity, Ui ui, String secret, LinearLayout host, Runnable onDone, Runnable onCancel) {
         this.activity = activity; this.ui = ui; this.secret = secret; this.host = host; this.onDone = onDone; this.onCancel = onCancel;
-        rows.add(new Row("💪", "Pompki", "count", 20));
-        rows.add(new Row("🧗", "Podciągnięcia", "count", 10));
-        rows.add(new Row("🧘", "Medytacja", "minutes", 10));
-        rows.add(new Row("🧶", "Druty", "done", 1));
-        rows.add(new Row("🏃", "Bieganie", "minutes", 30));
-        rows.add(new Row("📖", "Czytanie", "minutes", 20));
-        rows.add(new Row("💧", "Woda (szklanki)", "count", 8));
-        rows.add(new Row("🥗", "Zdrowy obiad", "done", 1));
+        rows.add(new Row("💪", ui.s(R.string.act_pushups), "count", 20));
+        rows.add(new Row("🧗", ui.s(R.string.act_pullups), "count", 10));
+        rows.add(new Row("🧘", ui.s(R.string.act_meditation), "minutes", 10));
+        rows.add(new Row("🧶", ui.s(R.string.act_knitting), "done", 1));
+        rows.add(new Row("🏃", ui.s(R.string.act_running), "minutes", 30));
+        rows.add(new Row("📖", ui.s(R.string.act_reading), "minutes", 20));
+        rows.add(new Row("💧", ui.s(R.string.act_water), "count", 8));
+        rows.add(new Row("🥗", ui.s(R.string.act_lunch), "done", 1));
     }
 
     void show() {
         LinearLayout col = new LinearLayout(activity);
         col.setOrientation(LinearLayout.VERTICAL);
-        col.addView(ui.title("Nowy krąg"));
-        nameInput = ui.input("Nazwa, np. Treningi");
+        col.addView(ui.title(ui.s(R.string.form_title)));
+        nameInput = ui.input(ui.s(R.string.form_name_hint));
         nameInput.setFilters(new InputFilter[] {new InputFilter.LengthFilter(MAX_NAME)});
         col.addView(nameInput);
-        col.addView(ui.label("Co robicie razem? Wybierz i ustaw cel na dzień.", 15, Ui.MUTED));
+        col.addView(ui.label(ui.s(R.string.form_intro), 15, Ui.MUTED));
         list = new LinearLayout(activity);
         list.setOrientation(LinearLayout.VERTICAL);
         col.addView(list);
         for (Row r : rows) addRowView(r);
-        col.addView(ui.secondary("+ Własna czynność", this::showCustomDialog));
+        col.addView(ui.secondary(ui.s(R.string.form_custom_btn), this::showCustomDialog));
         problem = ui.label("", 14, Ui.ACCENT);
         col.addView(problem);
-        col.addView(ui.button("Utwórz krąg", this::submit));
-        col.addView(ui.secondary("Anuluj", onCancel));
+        col.addView(ui.button(ui.s(R.string.form_create), this::submit));
+        col.addView(ui.secondary(ui.s(R.string.common_cancel), onCancel));
         ScrollView scroll = new ScrollView(activity);
         scroll.addView(col);
         host.removeAllViews();
@@ -94,7 +94,7 @@ final class CreateCircleForm {
         r.target.setTextColor(Ui.INK);
         r.target.setBackground(ui.rounded(Ui.CARD, Ui.LINE, 10));
         row.addView(r.target, new LinearLayout.LayoutParams(ui.dp(64), -2));
-        TextView unit = ui.text("minutes".equals(r.unit) ? " min" : " razy", 14, Ui.MUTED);
+        TextView unit = ui.text(ui.s("minutes".equals(r.unit) ? R.string.form_unit_min : R.string.form_unit_times), 14, Ui.MUTED);
         unit.setVisibility("done".equals(r.unit) ? View.GONE : View.VISIBLE);
         row.addView(unit);
         r.view = row;
@@ -115,11 +115,11 @@ final class CreateCircleForm {
         box.setOrientation(LinearLayout.VERTICAL);
         int pad = ui.dp(20);
         box.setPadding(pad, pad, pad, 0);
-        EditText name = ui.input("Nazwa czynności");
-        EditText target = ui.input("Cel na dzień");
+        EditText name = ui.input(ui.s(R.string.form_custom_name));
+        EditText target = ui.input(ui.s(R.string.form_custom_target));
         target.setInputType(InputType.TYPE_CLASS_NUMBER);
         RadioGroup units = new RadioGroup(activity);
-        String[] labels = {"razy", "minuty", "zrobione (tak/nie)"};
+        String[] labels = {ui.s(R.string.form_unit_count), ui.s(R.string.form_unit_minutes), ui.s(R.string.form_unit_done)};
         for (int i = 0; i < labels.length; i++) {
             RadioButton rb = new RadioButton(activity);
             rb.setText(labels[i]);
@@ -130,13 +130,13 @@ final class CreateCircleForm {
         box.addView(name);
         box.addView(target);
         box.addView(units);
-        new AlertDialog.Builder(activity).setTitle("Własna czynność").setView(box)
-            .setNegativeButton("Anuluj", null)
-            .setPositiveButton("Dodaj", (d, w) -> {
+        new AlertDialog.Builder(activity).setTitle(ui.s(R.string.form_custom_title)).setView(box)
+            .setNegativeButton(ui.s(R.string.common_cancel), null)
+            .setPositiveButton(ui.s(R.string.form_add), (d, w) -> {
                 String n = name.getText().toString().trim();
                 String unit = new String[] {"count", "minutes", "done"}[units.getCheckedRadioButtonId() - 1];
                 int t = parse(target.getText().toString(), "done".equals(unit) ? 1 : -1);
-                if (n.isEmpty() || t < 1) { problem.setText("Własna czynność: podaj nazwę i cel (1–1000)"); return; }
+                if (n.isEmpty() || t < 1) { problem.setText(ui.s(R.string.form_custom_bad)); return; }
                 Row r = new Row("⭐", n, unit, t);
                 r.selected = true;
                 rows.add(r);
@@ -156,21 +156,21 @@ final class CreateCircleForm {
 
     private void submit() {
         String name = nameInput.getText().toString().trim();
-        if (name.isEmpty()) { problem.setText("Wpisz nazwę kręgu"); return; }
+        if (name.isEmpty()) { problem.setText(ui.s(R.string.form_need_name)); return; }
         JSONArray chosen = new JSONArray();
         try {
             for (Row r : rows) {
                 if (!r.selected) continue;
                 int t = "done".equals(r.unit) ? 1 : parse(r.target.getText().toString(), -1);
-                if (t < 1) { problem.setText("Cel przy „" + r.name + "” musi być liczbą 1–1000"); return; }
+                if (t < 1) { problem.setText(ui.s(R.string.form_target_bad, r.name)); return; }
                 chosen.put(new JSONObject().put("name", r.name).put("emoji", r.emoji).put("unit", r.unit).put("dailyTarget", t));
             }
-            if (chosen.length() == 0) { problem.setText("Wybierz co najmniej jedną czynność"); return; }
+            if (chosen.length() == 0) { problem.setText(ui.s(R.string.form_need_activity)); return; }
             JSONObject args = new JSONObject().put("secret", secret).put("name", name).put("activities", chosen);
-            problem.setText("Tworzę krąg…");
+            problem.setText(ui.s(R.string.form_creating));
             Api.mutation("circles:create", args, r -> {
                 if (r.isOk()) onDone.run();
-                else problem.setText("Nie udało się utworzyć kręgu (" + r.error + ")");
+                else problem.setText(ui.s(R.string.form_create_err, r.error));
             });
         } catch (JSONException e) {
             throw new IllegalStateException(e);

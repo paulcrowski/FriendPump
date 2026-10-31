@@ -36,7 +36,7 @@ public final class MainActivity extends Activity {
         content.setOrientation(LinearLayout.VERTICAL);
         content.setGravity(Gravity.CENTER);
         root.addView(content, new LinearLayout.LayoutParams(-1, 0, 1));
-        TextView footer = ui.text("FriendPump v" + versionName() + " · ID urządzenia " + secret.substring(0, 6), 12, Ui.MUTED);
+        TextView footer = ui.text(ui.s(R.string.app_footer, versionName(), secret.substring(0, 6)), 12, Ui.MUTED);
         footer.setGravity(Gravity.CENTER);
         root.addView(footer, new LinearLayout.LayoutParams(-1, -2));
         setContentView(root);
@@ -59,22 +59,22 @@ public final class MainActivity extends Activity {
     }
 
     private void checkMe() {
-        showMessage("Łączę z serwerem…", null);
+        showMessage(ui.s(R.string.main_connecting), null);
         Api.query("users:me", args(null), r -> {
             if (r.isOk()) showReady(r.value.optString("name"));
             else if ("NOT_REGISTERED".equals(r.error)) showNameForm(null);
-            else showMessage("Brak połączenia z serwerem (" + r.error + ")", this::checkMe);
+            else showMessage(ui.s(R.string.main_conn_err, r.error), this::checkMe);
         });
     }
 
     private void register(String rawName) {
         String name = rawName.trim();
-        if (name.isEmpty()) { showNameForm("Wpisz imię"); return; }
-        showMessage("Zapisuję…", null);
+        if (name.isEmpty()) { showNameForm(ui.s(R.string.main_enter_name)); return; }
+        showMessage(ui.s(R.string.main_saving), null);
         Api.mutation("users:register", args(name), r -> {
             if (r.isOk()) showReady(r.value.optString("name"));
-            else if ("BAD_NAME".equals(r.error)) showNameForm("Imię musi mieć od 1 do " + MAX_NAME + " znaków");
-            else showMessage("Nie udało się zapisać (" + r.error + ")", () -> register(name));
+            else if ("BAD_NAME".equals(r.error)) showNameForm(ui.s(R.string.main_bad_name, MAX_NAME));
+            else showMessage(ui.s(R.string.main_save_err, r.error), () -> register(name));
         });
     }
 
@@ -87,13 +87,13 @@ public final class MainActivity extends Activity {
     private void showNameForm(String problem) {
         content.removeAllViews();
         content.addView(ui.title("FriendPump"));
-        content.addView(ui.label("Razem łatwiej o codzienny nawyk", 16, Ui.MUTED));
-        EditText input = ui.input("Twoje imię");
+        content.addView(ui.label(ui.s(R.string.main_tagline), 16, Ui.MUTED));
+        EditText input = ui.input(ui.s(R.string.main_name_hint));
         input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
         input.setFilters(new InputFilter[] {new InputFilter.LengthFilter(MAX_NAME)});
         content.addView(input);
         if (problem != null) content.addView(ui.label(problem, 14, Ui.ACCENT));
-        content.addView(ui.button("Zacznij", () -> {
+        content.addView(ui.button(ui.s(R.string.main_start), () -> {
             InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
             if (imm != null) imm.hideSoftInputFromWindow(input.getWindowToken(), 0);
             register(input.getText().toString());
@@ -103,7 +103,7 @@ public final class MainActivity extends Activity {
     private void showMessage(String message, Runnable retry) {
         content.removeAllViews();
         content.addView(ui.label(message, 18, Ui.INK));
-        if (retry != null) content.addView(ui.button("Spróbuj ponownie", retry));
+        if (retry != null) content.addView(ui.button(ui.s(R.string.common_retry), retry));
     }
 
     private JSONObject args(String name) {
