@@ -122,4 +122,13 @@
     <string name="today_bad_value">Invalid number</string>
     <string name="week_days_one">1 day</string>
     <string name="week_days_many">%1$d days</string>
+    <string name="home_groups_btn">🌍 Open groups</string>
+    <string name="groups_title">Open groups</string>
+    <string name="groups_intro">Do the same as thousands of others. You only see numbers; nobody sees you.</string>
+    <string name="groups_stats">%1$s in the group  ·  %2$s done this period</string>
+    <string name="groups_leave">Leave</string>
+    <string name="groups_done">I did it</string>
+    <string name="groups_done_already">✓ Done this period</string>
+    <string name="groups_load_err">Couldn\'t load groups (%1$s)</string>
+    <string name="groups_act_err">Something went wrong (%1$s)</string>
 </resources>

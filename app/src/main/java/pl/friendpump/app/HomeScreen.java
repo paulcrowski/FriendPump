@@ -26,6 +26,7 @@ final class HomeScreen {
     private final String userName;
     private TodayScreen today;
     private ChoresScreen chores;
+    private GroupsScreen groups;
 
     HomeScreen(Activity activity, Ui ui, String secret, LinearLayout host, String userName) {
         this.activity = activity;
@@ -51,6 +52,7 @@ final class HomeScreen {
         col.addView(ui.button(ui.s(R.string.home_create), this::showCreateForm));
         col.addView(ui.secondary(ui.s(R.string.home_join_btn), () -> showJoinForm(clipboardCode(), null)));
         col.addView(ui.secondary(ui.s(R.string.home_chores_btn), this::openChores));
+        col.addView(ui.secondary(ui.s(R.string.home_groups_btn), this::openGroups));
         setBody(col);
     }
 
@@ -77,6 +79,11 @@ final class HomeScreen {
         today.start();
     }
 
+    private void openGroups() {
+        groups = new GroupsScreen(activity, ui, secret, host, () -> { groups = null; show(); });
+        groups.show();
+    }
+
     private void openChores() {
         chores = new ChoresScreen(activity, ui, secret, host, () -> { chores = null; show(); });
         chores.show();
@@ -89,6 +96,7 @@ final class HomeScreen {
 
     boolean back() {
         if (chores != null) { chores.back(); return true; }
+        if (groups != null) { groups.back(); return true; }
         if (today == null) return false;
         today.stop();
         today = null;
