@@ -22,10 +22,10 @@ final class WeekView {
         JSONArray days = week.optJSONArray("days");
         JSONArray members = week.optJSONArray("members");
         LinearLayout grid = ui.card();
-        TextView title = ui.text("Ostatnie 7 dni", 18, Ui.INK);
+        TextView title = ui.text(ui.s(R.string.week_title), 18, Ui.INK);
         title.setTypeface(Typeface.DEFAULT_BOLD);
         grid.addView(title);
-        grid.addView(ui.text("Zielone ✓ = wszystkie czynności zrobione", 13, Ui.MUTED));
+        grid.addView(ui.text(ui.s(R.string.week_legend), 13, Ui.MUTED));
         grid.addView(dayHeader(days));
         for (int i = 0; i < members.length(); i++) grid.addView(memberGrid(members.optJSONObject(i)));
         col.addView(grid);
@@ -54,12 +54,12 @@ final class WeekView {
         head.setGravity(Gravity.CENTER_VERTICAL);
         String name = m.optString("name");
         head.addView(ui.avatar(name));
-        TextView who = ui.text(name + (m.optBoolean("isMe") ? " (Ty)" : ""), 15, Ui.INK);
+        TextView who = ui.text(name + (m.optBoolean("isMe") ? ui.s(R.string.week_you) : ""), 15, Ui.INK);
         who.setPadding(ui.dp(10), 0, 0, 0);
         head.addView(who, new LinearLayout.LayoutParams(0, -2, 1));
         int streak = m.optInt("streak");
         if (streak > 0) {
-            TextView s = ui.text("🔥 " + streak + (streak == 1 ? " dzień" : " dni"), 14, Ui.ACCENT);
+            TextView s = ui.text(streak == 1 ? ui.s(R.string.week_streak_one) : ui.s(R.string.week_streak_many, streak), 14, Ui.ACCENT);
             s.setTypeface(Typeface.DEFAULT_BOLD);
             head.addView(s);
         }
@@ -92,7 +92,7 @@ final class WeekView {
         TextView name = ui.text(a.optString("emoji") + "  " + a.optString("name"), 18, Ui.INK);
         name.setTypeface(Typeface.DEFAULT_BOLD);
         card.addView(name);
-        card.addView(ui.text("Razem w ostatnich 7 dniach", 13, Ui.MUTED));
+        card.addView(ui.text(ui.s(R.string.week_total), 13, Ui.MUTED));
         for (int i = 0; i < members.length(); i++) {
             JSONObject m = members.optJSONObject(i);
             int total = 0;
@@ -103,7 +103,7 @@ final class WeekView {
             row.setLayoutParams(ui.margins(12));
             row.addView(ui.avatar(m.optString("name")));
             LinearLayout mid = vertical();
-            mid.addView(ui.text(m.optString("name") + (m.optBoolean("isMe") ? " (Ty)" : ""), 15, Ui.INK));
+            mid.addView(ui.text(m.optString("name") + (m.optBoolean("isMe") ? ui.s(R.string.week_you) : ""), 15, Ui.INK));
             LinearLayout bar = ui.progress(total / (double) (target * 7), total >= target * 7 ? Ui.GOOD : Ui.ACCENT);
             ((LinearLayout.LayoutParams) bar.getLayoutParams()).topMargin = ui.dp(6);
             mid.addView(bar);
@@ -111,7 +111,7 @@ final class WeekView {
             mp.leftMargin = ui.dp(12);
             mp.rightMargin = ui.dp(12);
             row.addView(mid, mp);
-            String value = "done".equals(unit) ? total + (total == 1 ? " dzień" : " dni") : "minutes".equals(unit) ? total + " min" : String.valueOf(total);
+            String value = "done".equals(unit) ? (total == 1 ? ui.s(R.string.week_days_one) : ui.s(R.string.week_days_many, total)) : "minutes".equals(unit) ? total + " min" : String.valueOf(total);
             TextView v = ui.text(value, 15, total > 0 ? Ui.INK : Ui.MUTED);
             v.setTypeface(Typeface.DEFAULT_BOLD);
             row.addView(v);

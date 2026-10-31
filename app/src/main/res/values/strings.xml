@@ -95,4 +95,31 @@
     <string name="form_need_activity">Wybierz co najmniej jedną czynność</string>
     <string name="form_creating">Tworzę krąg…</string>
     <string name="form_create_err">Nie udało się utworzyć kręgu (%1$s)</string>
+    <string name="common_back">Wróć</string>
+    <string name="week_title">Ostatnie 7 dni</string>
+    <string name="week_legend">Zielone ✓ = wszystkie czynności zrobione</string>
+    <string name="week_you"> (Ty)</string>
+    <string name="week_streak_one">🔥 1 dzień</string>
+    <string name="week_streak_many">🔥 %1$d dni</string>
+    <string name="week_total">Razem w ostatnich 7 dniach</string>
+    <string name="today_load_err">Nie udało się pobrać danych (%1$s)</string>
+    <string name="today_back_circles">‹ Kręgi</string>
+    <string name="today_share">Kod %1$s · Udostępnij</string>
+    <string name="today_tab_today">Dziś</string>
+    <string name="today_tab_week">Tydzień</string>
+    <string name="today_done_count">%1$d/%2$d zrobiło</string>
+    <string name="today_done_val">✓ zrobione</string>
+    <string name="today_not_yet">jeszcze nie</string>
+    <string name="today_done_btn">Zrobione ✓</string>
+    <string name="today_undo">Cofnij</string>
+    <string name="today_other">Inne</string>
+    <string name="today_how_many">Ile?</string>
+    <string name="today_add_title">Dodaj wpis</string>
+    <string name="today_enter_number">Wpisz liczbę</string>
+    <string name="today_save_err">Nie udało się zapisać</string>
+    <string name="today_undo_err">Nie udało się cofnąć</string>
+    <string name="today_nothing_undo">Nie ma czego cofać</string>
+    <string name="today_bad_value">Niepoprawna liczba</string>
+    <string name="week_days_one">1 dzień</string>
+    <string name="week_days_many">%1$d dni</string>
 </resources>

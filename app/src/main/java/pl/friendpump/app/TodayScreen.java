@@ -56,9 +56,9 @@ final class TodayScreen {
             } else if (!quiet) {
                 LinearLayout col = new LinearLayout(activity);
                 col.setOrientation(LinearLayout.VERTICAL);
-                col.addView(ui.label("Nie udało się pobrać danych (" + r.error + ")", 18, Ui.INK));
-                col.addView(ui.button("Spróbuj ponownie", () -> load(false)));
-                col.addView(ui.secondary("Wróć", this::leave));
+                col.addView(ui.label(ui.s(R.string.today_load_err, r.error), 18, Ui.INK));
+                col.addView(ui.button(ui.s(R.string.common_retry), () -> load(false)));
+                col.addView(ui.secondary(ui.s(R.string.common_back), this::leave));
                 setBody(col);
             }
         });
@@ -67,7 +67,7 @@ final class TodayScreen {
     private void render(JSONObject v) {
         LinearLayout col = new LinearLayout(activity);
         col.setOrientation(LinearLayout.VERTICAL);
-        TextView back = ui.label("‹ Kręgi", 16, Ui.ACCENT);
+        TextView back = ui.label(ui.s(R.string.today_back_circles), 16, Ui.ACCENT);
         back.setTypeface(Typeface.DEFAULT_BOLD);
         back.setPadding(0, ui.dp(8), ui.dp(24), ui.dp(8));
         back.setOnClickListener(x -> leave());
@@ -79,7 +79,7 @@ final class TodayScreen {
         }
         col.addView(ui.title(circleName));
         col.addView(ui.label(Format.dayLabel(LocalDate.now()), 15, Ui.MUTED));
-        col.addView(ui.secondary("Kod " + circleCode + " · Udostępnij", () -> HomeScreen.share(activity, circleName, circleCode)));
+        col.addView(ui.secondary(ui.s(R.string.today_share, circleCode), () -> HomeScreen.share(activity, circleName, circleCode)));
         col.addView(tabs());
         if (weekTab) {
             col.addView(new WeekView(activity, ui).build(v));
@@ -96,8 +96,8 @@ final class TodayScreen {
         bar.setBackground(ui.rounded(Ui.TRACK, 0, 22));
         bar.setPadding(ui.dp(4), ui.dp(4), ui.dp(4), ui.dp(4));
         bar.setLayoutParams(ui.margins(16));
-        bar.addView(tab("Dziś", !weekTab));
-        bar.addView(tab("Tydzień", weekTab));
+        bar.addView(tab(ui.s(R.string.today_tab_today), !weekTab));
+        bar.addView(tab(ui.s(R.string.today_tab_week), weekTab));
         return bar;
     }
 
@@ -134,7 +134,7 @@ final class TodayScreen {
         name.setTypeface(Typeface.DEFAULT_BOLD);
         head.addView(name, new LinearLayout.LayoutParams(0, -2, 1));
         boolean all = done == totals.length();
-        head.addView(ui.text(done + "/" + totals.length() + " zrobiło", 14, all ? Ui.GOOD : Ui.MUTED));
+        head.addView(ui.text(ui.s(R.string.today_done_count, done, totals.length()), 14, all ? Ui.GOOD : Ui.MUTED));
         card.addView(head);
         card.addView(ui.text("done".equals(unit) ? "Raz dziennie" : "Cel: " + Format.target(unit, target) + " dziennie", 14, Ui.MUTED));
         for (int i = 0; i < totals.length(); i++) card.addView(memberRow(members.optJSONObject(i), totals.optJSONObject(i).optInt("total"), unit, target));
@@ -163,7 +163,7 @@ final class TodayScreen {
             mid.addView(bar);
         }
         row.addView(mid, mp);
-        String value = tick ? (ok ? "✓ zrobione" : "jeszcze nie") : (ok ? "✓ " + total : total + "/" + target);
+        String value = tick ? (ok ? ui.s(R.string.today_done_val) : ui.s(R.string.today_not_yet)) : (ok ? "✓ " + total : total + "/" + target);
         TextView v = ui.text(value, 15, ok ? Ui.GOOD : (total > 0 ? Ui.INK : Ui.MUTED));
         v.setTypeface(ok ? Typeface.DEFAULT_BOLD : Typeface.DEFAULT);
         row.addView(v);
@@ -174,41 +174,41 @@ final class TodayScreen {
         LinearLayout row = new LinearLayout(activity);
         row.setLayoutParams(ui.margins(16));
         if ("done".equals(unit)) {
-            if (mine == 0) row.addView(ui.chip("Zrobione ✓", Ui.ACCENT, Ui.BG, () -> add(activityId, 1)));
-            else row.addView(ui.chip("Cofnij", Ui.TRACK, Ui.MUTED, () -> undo(activityId)));
+            if (mine == 0) row.addView(ui.chip(ui.s(R.string.today_done_btn), Ui.ACCENT, Ui.BG, () -> add(activityId, 1)));
+            else row.addView(ui.chip(ui.s(R.string.today_undo), Ui.TRACK, Ui.MUTED, () -> undo(activityId)));
             return row;
         }
         for (int s : Format.steps(unit, target)) row.addView(ui.chip("+" + s, Ui.ACCENT_SOFT, Ui.ACCENT, () -> add(activityId, s)));
-        row.addView(ui.chip("Inne", Ui.ACCENT_SOFT, Ui.ACCENT, () -> askAmount(activityId)));
-        if (mine > 0) row.addView(ui.chip("Cofnij", Ui.TRACK, Ui.MUTED, () -> undo(activityId)));
+        row.addView(ui.chip(ui.s(R.string.today_other), Ui.ACCENT_SOFT, Ui.ACCENT, () -> askAmount(activityId)));
+        if (mine > 0) row.addView(ui.chip(ui.s(R.string.today_undo), Ui.TRACK, Ui.MUTED, () -> undo(activityId)));
         return row;
     }
 
     private void askAmount(String activityId) {
-        EditText input = ui.input("Ile?");
+        EditText input = ui.input(ui.s(R.string.today_how_many));
         input.setInputType(InputType.TYPE_CLASS_NUMBER);
-        new AlertDialog.Builder(activity).setTitle("Dodaj wpis").setView(input)
-            .setNegativeButton("Anuluj", null)
-            .setPositiveButton("Dodaj", (d, w) -> {
+        new AlertDialog.Builder(activity).setTitle(ui.s(R.string.today_add_title)).setView(input)
+            .setNegativeButton(ui.s(R.string.common_cancel), null)
+            .setPositiveButton(ui.s(R.string.form_add), (d, w) -> {
                 try {
                     add(activityId, Integer.parseInt(input.getText().toString().trim()));
                 } catch (NumberFormatException e) {
-                    Toast.makeText(activity, "Wpisz liczbę", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(activity, ui.s(R.string.today_enter_number), Toast.LENGTH_SHORT).show();
                 }
             }).show();
     }
 
     private void add(String activityId, int value) {
-        Api.mutation("checkins:add", args(activityId, value), r -> afterWrite(r, "Nie udało się zapisać"));
+        Api.mutation("checkins:add", args(activityId, value), r -> afterWrite(r, ui.s(R.string.today_save_err)));
     }
 
     private void undo(String activityId) {
-        Api.mutation("checkins:undoLast", args(activityId, 0), r -> afterWrite(r, "Nie udało się cofnąć"));
+        Api.mutation("checkins:undoLast", args(activityId, 0), r -> afterWrite(r, ui.s(R.string.today_undo_err)));
     }
 
     private void afterWrite(Api.Result r, String failure) {
         if (r.isOk()) { load(false); return; }
-        String why = "NOTHING_TO_UNDO".equals(r.error) ? "Nie ma czego cofać" : "BAD_VALUE".equals(r.error) ? "Niepoprawna liczba" : failure + " (" + r.error + ")";
+        String why = "NOTHING_TO_UNDO".equals(r.error) ? ui.s(R.string.today_nothing_undo) : "BAD_VALUE".equals(r.error) ? ui.s(R.string.today_bad_value) : failure + " (" + r.error + ")";
         Toast.makeText(activity, why, Toast.LENGTH_SHORT).show();
     }
 

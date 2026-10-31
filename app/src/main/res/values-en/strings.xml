@@ -95,4 +95,31 @@
     <string name="form_need_activity">Pick at least one activity</string>
     <string name="form_creating">Creating the circle…</string>
     <string name="form_create_err">Couldn\'t create the circle (%1$s)</string>
+    <string name="common_back">Back</string>
+    <string name="week_title">Last 7 days</string>
+    <string name="week_legend">Green ✓ = all activities done</string>
+    <string name="week_you"> (you)</string>
+    <string name="week_streak_one">🔥 1 day</string>
+    <string name="week_streak_many">🔥 %1$d days</string>
+    <string name="week_total">Total in the last 7 days</string>
+    <string name="today_load_err">Couldn\'t load the data (%1$s)</string>
+    <string name="today_back_circles">‹ Circles</string>
+    <string name="today_share">Code %1$s · Share</string>
+    <string name="today_tab_today">Today</string>
+    <string name="today_tab_week">Week</string>
+    <string name="today_done_count">%1$d/%2$d done</string>
+    <string name="today_done_val">✓ done</string>
+    <string name="today_not_yet">not yet</string>
+    <string name="today_done_btn">Done ✓</string>
+    <string name="today_undo">Undo</string>
+    <string name="today_other">Other</string>
+    <string name="today_how_many">How many?</string>
+    <string name="today_add_title">Add an entry</string>
+    <string name="today_enter_number">Enter a number</string>
+    <string name="today_save_err">Couldn\'t save</string>
+    <string name="today_undo_err">Couldn\'t undo</string>
+    <string name="today_nothing_undo">Nothing to undo</string>
+    <string name="today_bad_value">Invalid number</string>
+    <string name="week_days_one">1 day</string>
+    <string name="week_days_many">%1$d days</string>
 </resources>
