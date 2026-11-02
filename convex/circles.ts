@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import type { Id } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 import type { MutationCtx } from "./_generated/server";
 import { fail, requireUser } from "./auth";
@@ -73,6 +74,14 @@ async function uniqueCode(ctx: MutationCtx): Promise<string> {
   return fail("CODE_GENERATION_FAILED");
 }
 
+async function insertCircle(ctx: MutationCtx, userId: Id<"users">, name: string, personal: boolean): Promise<{ id: Id<"circles">; inviteCode: string }> {
+  const now = Date.now();
+  const inviteCode = await uniqueCode(ctx);
+  const id = await ctx.db.insert("circles", { name, inviteCode, createdBy: userId, createdAt: now, ...(personal ? { personalFor: userId } : {}) });
+  await ctx.db.insert("members", { circleId: id, userId, joinedAt: now });
+  return { id, inviteCode };
+}
+
 export const create = mutation({
   args: { secret: v.string(), name: v.string(), activities: v.array(activityInput) },
   handler: async (ctx, { secret, name, activities }) => {
@@ -80,15 +89,7 @@ export const create = mutation({
     const cleaned = name.trim();
     if (cleaned.length < 1 || cleaned.length > MAX_NAME) fail("BAD_NAME");
     const chosen = cleanActivities(activities);
-    const now = Date.now();
-    const inviteCode = await uniqueCode(ctx);
-    const circleId = await ctx.db.insert("circles", {
-      name: cleaned,
-      inviteCode,
-      createdBy: user._id,
-      createdAt: now,
-    });
-    await ctx.db.insert("members", { circleId, userId: user._id, joinedAt: now });
+    const { id: circleId, inviteCode } = await insertCircle(ctx, user._id, cleaned, false);
     for (const a of chosen) {
       await ctx.db.insert("activities", { circleId, ...a, archived: false });
     }
@@ -108,7 +109,7 @@ export const list = query({
     const circles = [];
     for (const m of memberships) {
       const circle = await ctx.db.get(m.circleId);
-      if (!circle) continue;
+      if (!circle || circle.personalFor) continue;
       const members = await ctx.db
         .query("members")
         .withIndex("by_circle", (q) => q.eq("circleId", circle._id))
@@ -148,7 +149,7 @@ export const join = mutation({
       .query("circles")
       .withIndex("by_inviteCode", (q) => q.eq("inviteCode", inviteCode))
       .unique();
-    if (!circle) fail("CIRCLE_NOT_FOUND");
+    if (!circle || circle.personalFor) fail("CIRCLE_NOT_FOUND");
     const existing = await ctx.db
       .query("members")
       .withIndex("by_circle_user", (q) => q.eq("circleId", circle._id).eq("userId", user._id))
@@ -162,5 +163,47 @@ export const join = mutation({
       await ctx.db.insert("members", { circleId: circle._id, userId: user._id, joinedAt: Date.now() });
     }
     return { id: circle._id, name: circle.name, memberCount: before.length + (existing ? 0 : 1) };
+  },
+});
+
+// Idempotentne: zawsze ten sam krąg osobisty tej osoby.
+export const ensurePersonal = mutation({
+  args: { secret: v.string(), name: v.string() },
+  handler: async (ctx, { secret, name }) => {
+    const user = await requireUser(ctx, secret);
+    const existing = await ctx.db.query("circles").withIndex("by_personalFor", (q) => q.eq("personalFor", user._id)).unique();
+    if (existing) return { id: existing._id };
+    const cleaned = name.trim();
+    if (cleaned.length < 1 || cleaned.length > MAX_NAME) fail("BAD_NAME");
+    return { id: (await insertCircle(ctx, user._id, cleaned, true)).id };
+  },
+});
+
+async function requireCircleMember(ctx: MutationCtx, userId: Id<"users">, circleId: Id<"circles">) {
+  const m = await ctx.db.query("members").withIndex("by_circle_user", (q) => q.eq("circleId", circleId).eq("userId", userId)).unique();
+  if (!m) fail("NOT_A_MEMBER");
+}
+
+export const addActivity = mutation({
+  args: { secret: v.string(), circleId: v.id("circles"), activity: activityInput },
+  handler: async (ctx, { secret, circleId, activity }) => {
+    const user = await requireUser(ctx, secret);
+    await requireCircleMember(ctx, user._id, circleId);
+    const [clean] = cleanActivities([activity]);
+    const active = (await ctx.db.query("activities").withIndex("by_circle", (q) => q.eq("circleId", circleId)).collect()).filter((a) => !a.archived);
+    if (active.length >= MAX_ACTIVITIES) fail("BAD_ACTIVITIES");
+    return { id: await ctx.db.insert("activities", { circleId, ...clean, archived: false }) };
+  },
+});
+
+export const archiveActivity = mutation({
+  args: { secret: v.string(), activityId: v.id("activities") },
+  handler: async (ctx, { secret, activityId }) => {
+    const user = await requireUser(ctx, secret);
+    const a = await ctx.db.get(activityId);
+    if (!a) fail("ACTIVITY_NOT_FOUND");
+    await requireCircleMember(ctx, user._id, a.circleId);
+    await ctx.db.patch(activityId, { archived: true });
+    return { ok: true };
   },
 });

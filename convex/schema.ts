@@ -14,7 +14,11 @@ export default defineSchema({
     inviteCode: v.string(), // 8 znaków bez mylących liter, bez myślnika
     createdBy: v.id("users"),
     createdAt: v.number(),
-  }).index("by_inviteCode", ["inviteCode"]),
+    // Krąg osobisty ("Moje sprawy"): jedna osoba, nie pokazuje się na liście kręgów, nie da się do niego dołączyć kodem.
+    personalFor: v.optional(v.id("users")),
+  })
+    .index("by_inviteCode", ["inviteCode"])
+    .index("by_personalFor", ["personalFor"]),
 
   members: defineTable({
     circleId: v.id("circles"),

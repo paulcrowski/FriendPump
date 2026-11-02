@@ -120,7 +120,7 @@ export const today = query({
       }
       result.push({ id: a._id, name: a.name, emoji: a.emoji, unit: a.unit, dailyTarget: a.dailyTarget, everyMonths: a.everyMonths ?? null, totals });
     }
-    return { circle: { id: circle._id, name: circle.name, inviteCode: circle.inviteCode }, members, activities: result };
+    return { circle: { id: circle._id, name: circle.name, inviteCode: circle.inviteCode, personal: circle.personalFor !== undefined }, members, activities: result };
   },
 });
 
