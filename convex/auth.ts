@@ -4,7 +4,7 @@ import type { MutationCtx, QueryCtx } from "./_generated/server";
 // Telefon losuje 32 bajty i wysyła je jako 64 znaki hex.
 const SECRET_FORMAT = /^[0-9a-f]{64}$/;
 
-export type ErrorCode = "BAD_SECRET" | "NOT_REGISTERED" | "BAD_NAME" | "CODE_GENERATION_FAILED" | "BAD_CODE" | "CIRCLE_NOT_FOUND" | "BAD_ACTIVITIES" | "NOT_A_MEMBER" | "BAD_DAY" | "BAD_VALUE" | "ACTIVITY_NOT_FOUND" | "NOTHING_TO_UNDO" | "BAD_CHORE" | "CHORE_NOT_FOUND" | "BAD_GROUP" | "CIRCLE_FULL";
+export type ErrorCode = "BAD_SECRET" | "NOT_REGISTERED" | "BAD_NAME" | "CODE_GENERATION_FAILED" | "BAD_CODE" | "CIRCLE_NOT_FOUND" | "BAD_ACTIVITIES" | "NOT_A_MEMBER" | "BAD_DAY" | "BAD_VALUE" | "ACTIVITY_NOT_FOUND" | "NOTHING_TO_UNDO" | "BAD_GROUP" | "CIRCLE_FULL";
 
 export function fail(code: ErrorCode): never {
   throw new ConvexError({ code });
