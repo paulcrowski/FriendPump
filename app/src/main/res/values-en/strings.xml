@@ -132,4 +132,6 @@
     <string name="groups_load_err">Couldn\'t load groups (%1$s)</string>
     <string name="groups_act_err">Something went wrong (%1$s)</string>
     <string name="home_circle_full">This circle is full (20 people maximum).</string>
+    <string name="freq_daily">Every day</string>
+    <string name="form_due_btn">Due: %1$s</string>
 </resources>

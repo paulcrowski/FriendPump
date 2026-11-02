@@ -86,7 +86,7 @@ final class TodayScreen {
         } else {
             JSONArray members = v.optJSONArray("members");
             JSONArray acts = v.optJSONArray("activities");
-            for (int i = 0; i < acts.length(); i++) col.addView(activityCard(acts.optJSONObject(i), members));
+            for (int i = 0; i < acts.length(); i++) col.addView(!acts.optJSONObject(i).isNull("everyMonths") ? cyclicCard(acts.optJSONObject(i), members) : activityCard(acts.optJSONObject(i), members));
         }
         setBody(col);
     }
@@ -139,6 +139,43 @@ final class TodayScreen {
         card.addView(ui.text("done".equals(unit) ? "Raz dziennie" : "Cel: " + Format.target(unit, target) + " dziennie", 14, Ui.MUTED));
         for (int i = 0; i < totals.length(); i++) card.addView(memberRow(members.optJSONObject(i), totals.optJSONObject(i).optInt("total"), unit, target));
         card.addView(actions(a.optString("id"), unit, target, mine));
+        return card;
+    }
+
+    /** Czynność co N miesięcy: przy każdej osobie termin ("za 12 dni", "zaległe 5 dni"). */
+    private LinearLayout cyclicCard(JSONObject a, JSONArray members) {
+        String id = a.optString("id");
+        JSONArray totals = a.optJSONArray("totals");
+        LocalDate today = LocalDate.now();
+        boolean doneToday = false;
+        LinearLayout card = ui.card();
+        TextView name = ui.text(a.optString("emoji") + "  " + a.optString("name"), 19, Ui.INK);
+        name.setTypeface(Typeface.DEFAULT_BOLD);
+        card.addView(name);
+        card.addView(ui.text(Format.cycle(a.optInt("everyMonths")), 14, Ui.MUTED));
+        for (int i = 0; i < totals.length(); i++) {
+            JSONObject t = totals.optJSONObject(i), m = members.optJSONObject(i);
+            if (m.optBoolean("isMe") && today.toString().equals(t.optString("lastDone"))) doneToday = true;
+            LinearLayout row = new LinearLayout(activity);
+            row.setGravity(Gravity.CENTER_VERTICAL);
+            row.setLayoutParams(ui.margins(12));
+            row.addView(ui.avatar(m.optString("name")));
+            TextView who = ui.text(m.optString("name") + (m.optBoolean("isMe") ? ui.s(R.string.week_you) : ""), 15, Ui.INK);
+            who.setPadding(ui.dp(12), 0, ui.dp(12), 0);
+            row.addView(who, new LinearLayout.LayoutParams(0, -2, 1));
+            LocalDate due = t.isNull("nextDue") ? null : LocalDate.parse(t.optString("nextDue"));
+            if (due != null) {
+                TextView when = ui.text(Format.due(today, due), 15, due.isBefore(today) ? Ui.ACCENT : Ui.GOOD);
+                when.setTypeface(Typeface.DEFAULT_BOLD);
+                row.addView(when);
+            }
+            card.addView(row);
+        }
+        LinearLayout actions = new LinearLayout(activity);
+        actions.setLayoutParams(ui.margins(16));
+        if (doneToday) actions.addView(ui.chip(ui.s(R.string.today_undo), Ui.TRACK, Ui.MUTED, () -> undo(id)));
+        else actions.addView(ui.chip(ui.s(R.string.today_done_btn), Ui.ACCENT, Ui.BG, () -> add(id, 1)));
+        card.addView(actions);
         return card;
     }
 

@@ -132,4 +132,6 @@
     <string name="groups_load_err">Nie udało się pobrać grup (%1$s)</string>
     <string name="groups_act_err">Nie udało się (%1$s)</string>
     <string name="home_circle_full">Ten krąg jest pełny (maksymalnie 20 osób).</string>
+    <string name="freq_daily">Codziennie</string>
+    <string name="form_due_btn">Termin: %1$s</string>
 </resources>

@@ -2,6 +2,7 @@ package pl.friendpump.app;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.DatePickerDialog;
 import android.text.InputFilter;
 import android.text.InputType;
 import android.view.Gravity;
@@ -12,6 +13,7 @@ import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import org.json.JSONArray;
@@ -25,6 +27,8 @@ final class CreateCircleForm {
     private static final class Row {
         final String emoji, name, unit;
         final int defaultTarget;
+        int months; // > 0: czynność cykliczna co tyle miesięcy
+        LocalDate firstDue;
         EditText target;
         boolean selected;
         LinearLayout view;
@@ -32,6 +36,13 @@ final class CreateCircleForm {
         Row(String emoji, String name, String unit, int defaultTarget) {
             this.emoji = emoji; this.name = name; this.unit = unit; this.defaultTarget = defaultTarget;
         }
+    }
+
+    private static Row cyclic(String emoji, String name, int months) {
+        Row r = new Row(emoji, name, "done", 1);
+        r.months = months;
+        r.firstDue = LocalDate.now().plusMonths(months);
+        return r;
     }
 
     private final Activity activity;
@@ -54,6 +65,9 @@ final class CreateCircleForm {
         rows.add(new Row("📖", ui.s(R.string.act_reading), "minutes", 20));
         rows.add(new Row("💧", ui.s(R.string.act_water), "count", 8));
         rows.add(new Row("🥗", ui.s(R.string.act_lunch), "done", 1));
+        rows.add(cyclic("🛞", ui.s(R.string.tpl_tires), 6));
+        rows.add(cyclic("🚗", ui.s(R.string.tpl_car), 12));
+        rows.add(cyclic("🩸", ui.s(R.string.tpl_blood), 12));
     }
 
     void show() {
@@ -84,7 +98,7 @@ final class CreateCircleForm {
         row.setGravity(Gravity.CENTER_VERTICAL);
         row.setPadding(ui.dp(16), ui.dp(12), ui.dp(16), ui.dp(12));
         row.setLayoutParams(ui.margins(10));
-        TextView label = ui.text(r.emoji + "  " + r.name, 17, Ui.INK);
+        TextView label = ui.text(r.emoji + "  " + r.name + (r.months > 0 ? "  ·  " + Format.cycle(r.months) : ""), 17, Ui.INK);
         row.addView(label, new LinearLayout.LayoutParams(0, -2, 1));
         r.target = new EditText(activity);
         r.target.setInputType(InputType.TYPE_CLASS_NUMBER);
@@ -118,6 +132,19 @@ final class CreateCircleForm {
         EditText name = ui.input(ui.s(R.string.form_custom_name));
         EditText target = ui.input(ui.s(R.string.form_custom_target));
         target.setInputType(InputType.TYPE_CLASS_NUMBER);
+        RadioGroup freq = new RadioGroup(activity);
+        int[] months = {0, 3, 6, 12, 24};
+        for (int i = 0; i < months.length; i++) {
+            RadioButton rb = new RadioButton(activity);
+            rb.setText(months[i] == 0 ? ui.s(R.string.freq_daily) : Format.cycle(months[i]));
+            rb.setId(i + 1);
+            freq.addView(rb);
+        }
+        freq.check(1);
+        LocalDate[] due = {LocalDate.now().plusMonths(12)};
+        android.widget.Button dueBtn = ui.secondary(ui.s(R.string.form_due_btn, due[0].toString()), () -> { });
+        dueBtn.setOnClickListener(v -> new DatePickerDialog(activity, (p, y, mo, d) -> { due[0] = LocalDate.of(y, mo + 1, d); dueBtn.setText(ui.s(R.string.form_due_btn, due[0].toString())); },
+            due[0].getYear(), due[0].getMonthValue() - 1, due[0].getDayOfMonth()).show());
         RadioGroup units = new RadioGroup(activity);
         String[] labels = {ui.s(R.string.form_unit_count), ui.s(R.string.form_unit_minutes), ui.s(R.string.form_unit_done)};
         for (int i = 0; i < labels.length; i++) {
@@ -128,16 +155,20 @@ final class CreateCircleForm {
         }
         units.check(1);
         box.addView(name);
+        box.addView(freq);
+        box.addView(dueBtn);
         box.addView(target);
         box.addView(units);
         new AlertDialog.Builder(activity).setTitle(ui.s(R.string.form_custom_title)).setView(box)
             .setNegativeButton(ui.s(R.string.common_cancel), null)
             .setPositiveButton(ui.s(R.string.form_add), (d, w) -> {
                 String n = name.getText().toString().trim();
-                String unit = new String[] {"count", "minutes", "done"}[units.getCheckedRadioButtonId() - 1];
+                int cycle = months[freq.getCheckedRadioButtonId() - 1];
+                String unit = cycle > 0 ? "done" : new String[] {"count", "minutes", "done"}[units.getCheckedRadioButtonId() - 1];
                 int t = parse(target.getText().toString(), "done".equals(unit) ? 1 : -1);
                 if (n.isEmpty() || t < 1) { problem.setText(ui.s(R.string.form_custom_bad)); return; }
                 Row r = new Row("⭐", n, unit, t);
+                if (cycle > 0) { r.months = cycle; r.firstDue = due[0]; }
                 r.selected = true;
                 rows.add(r);
                 addRowView(r);
@@ -163,7 +194,9 @@ final class CreateCircleForm {
                 if (!r.selected) continue;
                 int t = "done".equals(r.unit) ? 1 : parse(r.target.getText().toString(), -1);
                 if (t < 1) { problem.setText(ui.s(R.string.form_target_bad, r.name)); return; }
-                chosen.put(new JSONObject().put("name", r.name).put("emoji", r.emoji).put("unit", r.unit).put("dailyTarget", t));
+                JSONObject item = new JSONObject().put("name", r.name).put("emoji", r.emoji).put("unit", r.unit).put("dailyTarget", t);
+                if (r.months > 0) item.put("everyMonths", r.months).put("firstDue", r.firstDue.toString());
+                chosen.put(item);
             }
             if (chosen.length() == 0) { problem.setText(ui.s(R.string.form_need_activity)); return; }
             JSONObject args = new JSONObject().put("secret", secret).put("name", name).put("activities", chosen);
