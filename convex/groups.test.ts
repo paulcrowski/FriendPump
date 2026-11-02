@@ -65,6 +65,7 @@ describe("grupy otwarte jako kręgi", () => {
     await join(t, A, "blood");
     const due = await t.query(api.dues.mine, { secret: A });
     expect(due).toHaveLength(1);
+    expect(due[0].openKey).toBe("blood");
     expect(due[0].nextDue >= TODAY).toBe(true);
     expect(due[0].nextDue.slice(0, 4)).toBe(TODAY.slice(0, 4)); // roczna grupa: koniec bieżącego roku
     await t.mutation(api.groups.leave, { secret: A, key: "blood" });

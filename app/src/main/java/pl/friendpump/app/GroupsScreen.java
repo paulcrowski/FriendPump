@@ -2,6 +2,7 @@ package pl.friendpump.app;
 
 import android.app.Activity;
 import android.graphics.Typeface;
+import android.os.Build;
 import android.view.Gravity;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -82,13 +83,16 @@ final class GroupsScreen {
 
     private void act(String path, String key, String day) {
         setBody(ui.label(ui.s(R.string.chores_saving), 18, Ui.INK));
-        Api.mutation(path, day == null ? args("key", key) : argsWithDay(key, day), r -> {
-            if (r.isOk()) show();
+        Api.mutation(path, argsFor(path, key, day), r -> {
+            if (r.isOk()) {
+                if ("groups:join".equals(path) && Build.VERSION.SDK_INT >= 33) activity.requestPermissions(new String[] {"android.permission.POST_NOTIFICATIONS"}, 1);
+                show();
+            }
             else showError(ui.s(R.string.groups_act_err, r.error), () -> act(path, key, day));
         });
     }
 
-    private static Object[] nameFor(String key) {
+    static Object[] nameFor(String key) {
         for (Object[] n : NAMES) if (n[0].equals(key)) return n;
         return null; // klucz nieznany tej wersji apki: pomijamy, nie udajemy
     }
@@ -115,9 +119,13 @@ final class GroupsScreen {
         host.addView(scroll, new LinearLayout.LayoutParams(-1, -1));
     }
 
-    private JSONObject argsWithDay(String key, String day) {
+    /** join dostaje "today", markDone "day", leave tylko klucz: serwer odrzuca nieznane argumenty. */
+    private JSONObject argsFor(String path, String key, String day) {
         try {
-            return args("key", key).put("day", day);
+            JSONObject json = args("key", key);
+            if ("groups:join".equals(path)) json.put("today", LocalDate.now().toString());
+            if (day != null) json.put("day", day);
+            return json;
         } catch (JSONException e) {
             throw new IllegalStateException(e);
         }

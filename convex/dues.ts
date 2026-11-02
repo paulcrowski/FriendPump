@@ -18,7 +18,7 @@ export const mine = query({
         if (a.archived || !a.everyMonths) continue;
         const row = await ctx.db.query("memberDues").withIndex("by_activity_user", (q) => q.eq("activityId", a._id).eq("userId", user._id)).unique();
         const nextDue = row?.nextDue ?? a.firstDue;
-        if (nextDue) out.push({ id: a._id, circleId: circle._id, circleName: circle.name, name: a.name, emoji: a.emoji, nextDue });
+        if (nextDue) out.push({ id: a._id, circleId: circle._id, circleName: circle.name, openKey: circle.openKey ?? null, name: a.name, emoji: a.emoji, nextDue });
       }
     }
     return out.sort((x, y) => (x.nextDue < y.nextDue ? -1 : x.nextDue > y.nextDue ? 1 : 0));

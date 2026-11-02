@@ -40,7 +40,7 @@ final class HomeScreen {
         // Przypomnienia: terminy wszystkich moich czynności cyklicznych z jednego zapytania.
         // Gdy się nie uda, zostają dotychczasowe alarmy (kopia w telefonie), a lista kręgów i tak się ładuje.
         Api.query("dues:mine", args(null, null), d -> {
-            if (d.isOk()) Reminders.sync(activity, d.value.optJSONArray("items"));
+            if (d.isOk()) Reminders.sync(activity, localized(d.value.optJSONArray("items")));
             Api.query("circles:list", args(null, null), r -> {
                 if (!r.isOk()) { showError(ui.s(R.string.home_list_err, r.error), this::show); return; }
                 showCircles(r.value.optJSONArray("items"));
@@ -86,6 +86,20 @@ final class HomeScreen {
     private void openGroups() {
         groups = new GroupsScreen(activity, ui, secret, host, () -> { groups = null; show(); });
         groups.show();
+    }
+
+    /** Czynność grupy otwartej ma na serwerze tylko klucz: nazwę i emoji dokładamy tu, w języku telefonu. */
+    private JSONArray localized(JSONArray items) {
+        try {
+            for (int i = 0; i < items.length(); i++) {
+                JSONObject item = items.getJSONObject(i);
+                Object[] n = item.isNull("openKey") ? null : GroupsScreen.nameFor(item.getString("openKey"));
+                if (n != null) item.put("emoji", n[1]).put("name", ui.s((Integer) n[2]));
+            }
+        } catch (JSONException e) {
+            throw new IllegalStateException(e);
+        }
+        return items;
     }
 
     private void openPersonal() {
