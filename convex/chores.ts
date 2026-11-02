@@ -3,8 +3,8 @@ import type { Id } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 import type { MutationCtx } from "./_generated/server";
 import { fail, requireUser } from "./auth";
+import { addMonths, parseDay } from "./dates";
 
-const DAY_FORMAT = /^\d{4}-\d{2}-\d{2}$/;
 const DAY_MS = 86_400_000;
 const MAX_SKEW_DAYS = 2; // strefy czasowe + niedokładny zegar telefonu
 const MAX_NAME = 30;
@@ -12,24 +12,8 @@ const MAX_CHORES = 50;
 const MAX_MONTHS = 24;
 const MAX_DUE_YEARS = 3; // termin pierwszego wykonania nie dalej niż 3 lata
 
-function parseDay(day: string): number {
-  const ms = DAY_FORMAT.test(day) ? Date.parse(day + "T00:00:00Z") : NaN;
-  if (Number.isNaN(ms) || new Date(ms).toISOString().slice(0, 10) !== day) fail("BAD_DAY");
-  return ms;
-}
-
 function checkToday(day: string): void {
   if (Math.abs(parseDay(day) - Date.now()) > (MAX_SKEW_DAYS + 1) * DAY_MS) fail("BAD_DAY");
-}
-
-// 31 stycznia + 1 miesiąc = 28/29 lutego, nie 3 marca.
-export function addMonths(day: string, months: number): string {
-  const d = new Date(parseDay(day));
-  const target = d.getUTCFullYear() * 12 + d.getUTCMonth() + months;
-  const year = Math.floor(target / 12);
-  const month = target % 12;
-  const lastDay = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
-  return new Date(Date.UTC(year, month, Math.min(d.getUTCDate(), lastDay))).toISOString().slice(0, 10);
 }
 
 async function ownChore(ctx: MutationCtx, userId: Id<"users">, choreId: Id<"chores">) {

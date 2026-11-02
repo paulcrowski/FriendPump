@@ -32,7 +32,19 @@ export default defineSchema({
     unit: v.union(v.literal("count"), v.literal("minutes"), v.literal("done")),
     dailyTarget: v.number(),
     archived: v.boolean(),
+    // Czynność cykliczna: co N miesięcy zamiast codziennie (unit = "done", dailyTarget = 1).
+    // firstDue = termin domyślny dla każdego członka, dopóki nie zrobi jej pierwszy raz.
+    everyMonths: v.optional(v.number()),
+    firstDue: v.optional(v.string()),
   }).index("by_circle", ["circleId"]),
+
+  // Termin członka dla czynności cyklicznej. Brak wiersza = obowiązuje firstDue czynności.
+  memberDues: defineTable({
+    activityId: v.id("activities"),
+    userId: v.id("users"),
+    nextDue: v.string(),
+    lastDone: v.string(),
+  }).index("by_activity_user", ["activityId", "userId"]),
 
   // day = "YYYY-MM-DD" w czasie lokalnym telefonu.
   checkins: defineTable({

@@ -12,6 +12,7 @@ import type * as auth from "../auth.js";
 import type * as checkins from "../checkins.js";
 import type * as chores from "../chores.js";
 import type * as circles from "../circles.js";
+import type * as dates from "../dates.js";
 import type * as groups from "../groups.js";
 import type * as users from "../users.js";
 
@@ -26,6 +27,7 @@ declare const fullApi: ApiFromModules<{
   checkins: typeof checkins;
   chores: typeof chores;
   circles: typeof circles;
+  dates: typeof dates;
   groups: typeof groups;
   users: typeof users;
 }>;

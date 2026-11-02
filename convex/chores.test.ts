@@ -2,7 +2,7 @@
 import { convexTest } from "convex-test";
 import { describe, expect, it } from "vitest";
 import { api } from "./_generated/api";
-import { addMonths } from "./chores";
+import { addMonths } from "./dates";
 import schema from "./schema";
 
 const modules = import.meta.glob("./**/*.*s");

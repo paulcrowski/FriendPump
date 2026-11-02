@@ -3,6 +3,7 @@ import type { Doc, Id } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { fail, requireUser } from "./auth";
+import { addMonths } from "./dates";
 
 const DAY_FORMAT = /^\d{4}-\d{2}-\d{2}$/;
 const DAY_MS = 86_400_000;
@@ -39,6 +40,22 @@ async function myEntries(ctx: QueryCtx | MutationCtx, userId: Id<"users">, activ
 
 const sum = (rows: Doc<"checkins">[]) => rows.reduce((s, r) => s + r.value, 0);
 
+async function dueRow(ctx: QueryCtx | MutationCtx, activityId: Id<"activities">, userId: Id<"users">) {
+  return ctx.db.query("memberDues").withIndex("by_activity_user", (q) => q.eq("activityId", activityId).eq("userId", userId)).unique();
+}
+
+// Czynność cykliczna: termin = dzień ostatniego wpisu + cykl. Bez wpisów wraca firstDue (brak wiersza).
+async function refreshDue(ctx: MutationCtx, activity: Doc<"activities">, userId: Id<"users">) {
+  if (!activity.everyMonths) return;
+  const all = await ctx.db.query("checkins").withIndex("by_activity_user_day", (q) => q.eq("activityId", activity._id).eq("userId", userId)).collect();
+  const last = all.reduce<string | null>((a, r) => (a === null || r.day > a ? r.day : a), null);
+  const row = await dueRow(ctx, activity._id, userId);
+  if (last === null) { if (row) await ctx.db.delete(row._id); return; }
+  const fields = { nextDue: addMonths(last, activity.everyMonths), lastDone: last };
+  if (row) await ctx.db.patch(row._id, fields);
+  else await ctx.db.insert("memberDues", { activityId: activity._id, userId, ...fields });
+}
+
 export const add = mutation({
   args: { secret: v.string(), activityId: v.id("activities"), day: v.string(), value: v.number() },
   handler: async (ctx, { secret, activityId, day, value }) => {
@@ -51,6 +68,7 @@ export const add = mutation({
     // "Zrobione" to tak/nie: drugie kliknięcie niczego nie dubluje.
     if (activity.unit === "done" && rows.length > 0) return { total: sum(rows) };
     await ctx.db.insert("checkins", { activityId, circleId: activity.circleId, userId: user._id, day, value, createdAt: Date.now() });
+    await refreshDue(ctx, activity, user._id);
     return { total: sum(rows) + value };
   },
 });
@@ -60,11 +78,12 @@ export const undoLast = mutation({
   handler: async (ctx, { secret, activityId, day }) => {
     const user = await requireUser(ctx, secret);
     checkDayFormat(day);
-    await activityFor(ctx, user._id, activityId);
+    const activity = await activityFor(ctx, user._id, activityId);
     const rows = await myEntries(ctx, user._id, activityId, day);
     const last = rows.reduce<Doc<"checkins"> | null>((a, r) => (!a || r._creationTime > a._creationTime ? r : a), null);
     if (!last) fail("NOTHING_TO_UNDO");
     await ctx.db.delete(last._id);
+    await refreshDue(ctx, activity, user._id);
     return { total: sum(rows) - last.value };
   },
 });
@@ -89,8 +108,17 @@ export const today = query({
     const result = [];
     for (const a of activities.filter((x) => !x.archived)) {
       const entries = await ctx.db.query("checkins").withIndex("by_activity_day", (q) => q.eq("activityId", a._id).eq("day", day)).collect();
-      const totals = members.map((m) => ({ userId: m.id, total: sum(entries.filter((e) => e.userId === m.id)) }));
-      result.push({ id: a._id, name: a.name, emoji: a.emoji, unit: a.unit, dailyTarget: a.dailyTarget, totals });
+      const totals = [];
+      for (const m of members) {
+        const row = a.everyMonths ? await dueRow(ctx, a._id, m.id) : null;
+        totals.push({
+          userId: m.id,
+          total: sum(entries.filter((e) => e.userId === m.id)),
+          nextDue: a.everyMonths ? (row?.nextDue ?? a.firstDue ?? null) : null,
+          lastDone: row?.lastDone ?? null,
+        });
+      }
+      result.push({ id: a._id, name: a.name, emoji: a.emoji, unit: a.unit, dailyTarget: a.dailyTarget, everyMonths: a.everyMonths ?? null, totals });
     }
     return { circle: { id: circle._id, name: circle.name, inviteCode: circle.inviteCode }, members, activities: result };
   },
@@ -110,7 +138,8 @@ export const week = query({
     checkDayFormat(endDay);
     await requireMember(ctx, user._id, circleId);
     const startDay = shiftDay(endDay, -(WINDOW_DAYS - 1));
-    const activities = (await ctx.db.query("activities").withIndex("by_circle", (q) => q.eq("circleId", circleId)).collect()).filter((a) => !a.archived);
+    // Tydzień i seria dotyczą tylko czynności dziennych; cykliczne mają termin, nie siatkę dni.
+    const activities = (await ctx.db.query("activities").withIndex("by_circle", (q) => q.eq("circleId", circleId)).collect()).filter((a) => !a.archived && !a.everyMonths);
     const entries = await ctx.db
       .query("checkins")
       .withIndex("by_circle_day", (q) => q.eq("circleId", circleId).gte("day", startDay).lte("day", endDay))

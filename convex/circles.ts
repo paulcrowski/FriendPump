@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import type { MutationCtx } from "./_generated/server";
 import { fail, requireUser } from "./auth";
+import { addMonths, parseDay } from "./dates";
 
 const MAX_NAME = 30;
 // Bez 0/O, 1/I/L, żeby kod dało się przepisać z komunikatora.
@@ -19,6 +20,8 @@ const activityInput = v.object({
   emoji: v.string(),
   unit: v.union(v.literal("count"), v.literal("minutes"), v.literal("done")),
   dailyTarget: v.number(),
+  everyMonths: v.optional(v.number()),
+  firstDue: v.optional(v.string()),
 });
 
 type ActivityInput = {
@@ -26,17 +29,30 @@ type ActivityInput = {
   emoji: string;
   unit: "count" | "minutes" | "done";
   dailyTarget: number;
+  everyMonths?: number;
+  firstDue?: string;
 };
+
+const MAX_CYCLE_MONTHS = 24;
+const MAX_DUE_YEARS = 3;
 
 function cleanActivities(list: ActivityInput[]): ActivityInput[] {
   if (list.length < 1 || list.length > MAX_ACTIVITIES) fail("BAD_ACTIVITIES");
   return list.map((a) => {
     const name = a.name.trim();
     const emoji = a.emoji.trim();
+    const cyclic = a.everyMonths !== undefined || a.firstDue !== undefined;
+    if (cyclic) {
+      const today = new Date().toISOString().slice(0, 10);
+      const badCycle = a.unit !== "done" || a.everyMonths === undefined || !Number.isInteger(a.everyMonths) || a.everyMonths < 1 || a.everyMonths > MAX_CYCLE_MONTHS;
+      if (badCycle || a.firstDue === undefined || parseDay(a.firstDue) > parseDay(addMonths(today, MAX_DUE_YEARS * 12))) fail("BAD_ACTIVITIES");
+    }
     const target = a.unit === "done" ? 1 : a.dailyTarget;
     const badTarget = !Number.isInteger(target) || target < 1 || target > MAX_TARGET;
     if (name.length < 1 || name.length > MAX_NAME || emoji.length < 1 || emoji.length > 8 || badTarget) fail("BAD_ACTIVITIES");
-    return { name, emoji, unit: a.unit, dailyTarget: target };
+    return cyclic
+      ? { name, emoji, unit: a.unit, dailyTarget: target, everyMonths: a.everyMonths, firstDue: a.firstDue }
+      : { name, emoji, unit: a.unit, dailyTarget: target };
   });
 }
 
@@ -108,7 +124,7 @@ export const list = query({
         memberCount: members.length,
         activities: activities
           .filter((a) => !a.archived)
-          .map((a) => ({ id: a._id, name: a.name, emoji: a.emoji, unit: a.unit, dailyTarget: a.dailyTarget })),
+          .map((a) => ({ id: a._id, name: a.name, emoji: a.emoji, unit: a.unit, dailyTarget: a.dailyTarget, everyMonths: a.everyMonths ?? null, firstDue: a.firstDue ?? null })),
       });
     }
     return circles;
