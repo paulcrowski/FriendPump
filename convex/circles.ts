@@ -109,7 +109,7 @@ export const list = query({
     const circles = [];
     for (const m of memberships) {
       const circle = await ctx.db.get(m.circleId);
-      if (!circle || circle.personalFor) continue;
+      if (!circle || circle.personalFor || circle.openKey) continue;
       const members = await ctx.db
         .query("members")
         .withIndex("by_circle", (q) => q.eq("circleId", circle._id))
@@ -149,7 +149,7 @@ export const join = mutation({
       .query("circles")
       .withIndex("by_inviteCode", (q) => q.eq("inviteCode", inviteCode))
       .unique();
-    if (!circle || circle.personalFor) fail("CIRCLE_NOT_FOUND");
+    if (!circle || circle.personalFor || circle.openKey) fail("CIRCLE_NOT_FOUND");
     const existing = await ctx.db
       .query("members")
       .withIndex("by_circle_user", (q) => q.eq("circleId", circle._id).eq("userId", user._id))
@@ -189,6 +189,7 @@ export const addActivity = mutation({
   handler: async (ctx, { secret, circleId, activity }) => {
     const user = await requireUser(ctx, secret);
     await requireCircleMember(ctx, user._id, circleId);
+    if ((await ctx.db.get(circleId))?.openKey) fail("NOT_A_MEMBER"); // katalog czynności krągu otwartego jest stały
     const [clean] = cleanActivities([activity]);
     const active = (await ctx.db.query("activities").withIndex("by_circle", (q) => q.eq("circleId", circleId)).collect()).filter((a) => !a.archived);
     if (active.length >= MAX_ACTIVITIES) fail("BAD_ACTIVITIES");
@@ -203,6 +204,7 @@ export const archiveActivity = mutation({
     const a = await ctx.db.get(activityId);
     if (!a) fail("ACTIVITY_NOT_FOUND");
     await requireCircleMember(ctx, user._id, a.circleId);
+    if ((await ctx.db.get(a.circleId))?.openKey) fail("NOT_A_MEMBER");
     await ctx.db.patch(activityId, { archived: true });
     return { ok: true };
   },

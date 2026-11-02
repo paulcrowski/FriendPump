@@ -16,9 +16,12 @@ export default defineSchema({
     createdAt: v.number(),
     // Krąg osobisty ("Moje sprawy"): jedna osoba, nie pokazuje się na liście kręgów, nie da się do niego dołączyć kodem.
     personalFor: v.optional(v.id("users")),
+    // Krąg otwarty (klucz z katalogu w groups.ts): bez kodu, bez widoku członków, tylko liczniki.
+    openKey: v.optional(v.string()),
   })
     .index("by_inviteCode", ["inviteCode"])
-    .index("by_personalFor", ["personalFor"]),
+    .index("by_personalFor", ["personalFor"])
+    .index("by_openKey", ["openKey"]),
 
   members: defineTable({
     circleId: v.id("circles"),
@@ -47,7 +50,7 @@ export default defineSchema({
     activityId: v.id("activities"),
     userId: v.id("users"),
     nextDue: v.string(),
-    lastDone: v.string(),
+    lastDone: v.optional(v.string()),
   }).index("by_activity_user", ["activityId", "userId"]),
 
   // day = "YYYY-MM-DD" w czasie lokalnym telefonu.
@@ -62,17 +65,6 @@ export default defineSchema({
     .index("by_activity_day", ["activityId", "day"])
     .index("by_activity_user_day", ["activityId", "userId", "day"])
     .index("by_circle_day", ["circleId", "day"]),
-
-  // Otwarte grupy (np. "tires") mają stały katalog w groups.ts. Nie ma listy członków dla innych:
-  // widać tylko liczniki. groupMembers służy do sprawdzenia "czy ja jestem" i jednego wykonania na okres.
-  groupMembers: defineTable({
-    groupKey: v.string(),
-    userId: v.id("users"),
-    joinedAt: v.number(),
-    lastDonePeriod: v.optional(v.string()),
-  })
-    .index("by_group_user", ["groupKey", "userId"])
-    .index("by_user", ["userId"]),
 
   // Licznik dzielony na shardy, żeby tysiące równoczesnych zapisów nie biły w jeden dokument.
   // kind = "members" albo "done:<okres>". Wartość = suma n po shardach.

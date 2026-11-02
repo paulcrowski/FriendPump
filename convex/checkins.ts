@@ -45,7 +45,7 @@ async function dueRow(ctx: QueryCtx | MutationCtx, activityId: Id<"activities">,
 }
 
 // Czynność cykliczna: termin = dzień ostatniego wpisu + cykl. Bez wpisów wraca firstDue (brak wiersza).
-async function refreshDue(ctx: MutationCtx, activity: Doc<"activities">, userId: Id<"users">) {
+export async function refreshDue(ctx: MutationCtx, activity: Doc<"activities">, userId: Id<"users">) {
   if (!activity.everyMonths) return;
   const all = await ctx.db.query("checkins").withIndex("by_activity_user_day", (q) => q.eq("activityId", activity._id).eq("userId", userId)).collect();
   const last = all.reduce<string | null>((a, r) => (a === null || r.day > a ? r.day : a), null);
@@ -97,6 +97,7 @@ export const today = query({
     await requireMember(ctx, user._id, circleId);
     const circle = await ctx.db.get(circleId);
     if (!circle) fail("NOT_A_MEMBER");
+    if (circle.openKey) fail("CIRCLE_NOT_FOUND"); // krąg otwarty może mieć tysiące osób: bez listy członków
     const memberRows = await ctx.db.query("members").withIndex("by_circle", (q) => q.eq("circleId", circleId)).collect();
     const members = [];
     for (const m of memberRows.sort((a, b) => a.joinedAt - b.joinedAt)) {
@@ -137,6 +138,7 @@ export const week = query({
     const user = await requireUser(ctx, secret);
     checkDayFormat(endDay);
     await requireMember(ctx, user._id, circleId);
+    if ((await ctx.db.get(circleId))?.openKey) fail("CIRCLE_NOT_FOUND");
     const startDay = shiftDay(endDay, -(WINDOW_DAYS - 1));
     // Tydzień i seria dotyczą tylko czynności dziennych; cykliczne mają termin, nie siatkę dni.
     const activities = (await ctx.db.query("activities").withIndex("by_circle", (q) => q.eq("circleId", circleId)).collect()).filter((a) => !a.archived && !a.everyMonths);
