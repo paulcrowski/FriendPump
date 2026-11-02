@@ -134,4 +134,6 @@
     <string name="home_circle_full">Ten krąg jest pełny (maksymalnie 20 osób).</string>
     <string name="freq_daily">Codziennie</string>
     <string name="form_due_btn">Termin: %1$s</string>
+    <string name="home_personal_name">Moje sprawy</string>
+    <string name="today_add_activity">+ Dodaj czynność</string>
 </resources>

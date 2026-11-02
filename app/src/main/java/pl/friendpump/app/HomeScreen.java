@@ -25,7 +25,6 @@ final class HomeScreen {
     private final LinearLayout host;
     private final String userName;
     private TodayScreen today;
-    private ChoresScreen chores;
     private GroupsScreen groups;
 
     HomeScreen(Activity activity, Ui ui, String secret, LinearLayout host, String userName) {
@@ -38,9 +37,14 @@ final class HomeScreen {
 
     void show() {
         setBody(ui.label(ui.s(R.string.home_loading), 18, Ui.INK));
-        Api.query("circles:list", args(null, null), r -> {
-            if (!r.isOk()) { showError(ui.s(R.string.home_list_err, r.error), this::show); return; }
-            showCircles(r.value.optJSONArray("items"));
+        // Przypomnienia: terminy wszystkich moich czynności cyklicznych z jednego zapytania.
+        // Gdy się nie uda, zostają dotychczasowe alarmy (kopia w telefonie), a lista kręgów i tak się ładuje.
+        Api.query("dues:mine", args(null, null), d -> {
+            if (d.isOk()) Reminders.sync(activity, d.value.optJSONArray("items"));
+            Api.query("circles:list", args(null, null), r -> {
+                if (!r.isOk()) { showError(ui.s(R.string.home_list_err, r.error), this::show); return; }
+                showCircles(r.value.optJSONArray("items"));
+            });
         });
     }
 
@@ -51,7 +55,7 @@ final class HomeScreen {
         for (int i = 0; i < items.length(); i++) col.addView(card(items.optJSONObject(i)));
         col.addView(ui.button(ui.s(R.string.home_create), this::showCreateForm));
         col.addView(ui.secondary(ui.s(R.string.home_join_btn), () -> showJoinForm(clipboardCode(), null)));
-        col.addView(ui.secondary(ui.s(R.string.home_chores_btn), this::openChores));
+        col.addView(ui.secondary(ui.s(R.string.home_chores_btn), this::openPersonal));
         col.addView(ui.secondary(ui.s(R.string.home_groups_btn), this::openGroups));
         setBody(col);
     }
@@ -84,9 +88,12 @@ final class HomeScreen {
         groups.show();
     }
 
-    private void openChores() {
-        chores = new ChoresScreen(activity, ui, secret, host, () -> { chores = null; show(); });
-        chores.show();
+    private void openPersonal() {
+        setBody(ui.label(ui.s(R.string.chores_loading), 18, Ui.INK));
+        Api.mutation("circles:ensurePersonal", args("name", ui.s(R.string.home_personal_name)), r -> {
+            if (r.isOk()) openToday(r.value.optString("id"));
+            else showError(ui.s(R.string.home_list_err, r.error), this::show);
+        });
     }
 
     /** Wywoływane z cyklu życia aktywności i przycisku wstecz. */
@@ -95,7 +102,6 @@ final class HomeScreen {
     void resume() { if (today != null) today.start(); }
 
     boolean back() {
-        if (chores != null) { chores.back(); return true; }
         if (groups != null) { groups.back(); return true; }
         if (today == null) return false;
         today.stop();

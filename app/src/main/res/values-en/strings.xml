@@ -134,4 +134,6 @@
     <string name="home_circle_full">This circle is full (20 people maximum).</string>
     <string name="freq_daily">Every day</string>
     <string name="form_due_btn">Due: %1$s</string>
+    <string name="home_personal_name">My things</string>
+    <string name="today_add_activity">+ Add an activity</string>
 </resources>

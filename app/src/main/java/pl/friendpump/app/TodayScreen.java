@@ -33,6 +33,7 @@ final class TodayScreen {
     private String last = "";
     private boolean weekTab;
     private String circleName = "", circleCode = "";
+    private boolean personal;
 
     TodayScreen(Activity activity, Ui ui, String secret, LinearLayout host, String circleId, Runnable onBack) {
         this.activity = activity; this.ui = ui; this.secret = secret; this.host = host; this.circleId = circleId; this.onBack = onBack;
@@ -76,19 +77,42 @@ final class TodayScreen {
             JSONObject circle = v.optJSONObject("circle");
             circleName = circle.optString("name");
             circleCode = Format.code(circle.optString("inviteCode"));
+            personal = circle.optBoolean("personal");
         }
         col.addView(ui.title(circleName));
         col.addView(ui.label(Format.dayLabel(LocalDate.now()), 15, Ui.MUTED));
-        col.addView(ui.secondary(ui.s(R.string.today_share, circleCode), () -> HomeScreen.share(activity, circleName, circleCode)));
-        col.addView(tabs());
+        if (!personal) {
+            col.addView(ui.secondary(ui.s(R.string.today_share, circleCode), () -> HomeScreen.share(activity, circleName, circleCode)));
+            col.addView(tabs());
+        }
         if (weekTab) {
             col.addView(new WeekView(activity, ui).build(v));
         } else {
             JSONArray members = v.optJSONArray("members");
             JSONArray acts = v.optJSONArray("activities");
-            for (int i = 0; i < acts.length(); i++) col.addView(!acts.optJSONObject(i).isNull("everyMonths") ? cyclicCard(acts.optJSONObject(i), members) : activityCard(acts.optJSONObject(i), members));
+            for (int i = 0; i < acts.length(); i++) {
+                JSONObject a = acts.optJSONObject(i);
+                LinearLayout card = !a.isNull("everyMonths") ? cyclicCard(a, members) : activityCard(a, members);
+                card.setOnLongClickListener(x -> { confirmArchive(a.optString("id"), a.optString("name")); return true; });
+                col.addView(card);
+            }
+            col.addView(ui.secondary(ui.s(R.string.today_add_activity), () -> new AddActivityFlow(activity, ui, secret, circleId, () -> { last = ""; load(false); }).start()));
         }
         setBody(col);
+    }
+
+    private void confirmArchive(String activityId, String name) {
+        new AlertDialog.Builder(activity).setMessage(ui.s(R.string.chores_confirm_delete, name))
+            .setPositiveButton(ui.s(R.string.chores_delete), (d, w) -> Api.mutation("circles:archiveActivity", archiveArgs(activityId), r -> afterWrite(r, ui.s(R.string.today_save_err))))
+            .setNegativeButton(ui.s(R.string.common_cancel), null).show();
+    }
+
+    private JSONObject archiveArgs(String activityId) {
+        try {
+            return new JSONObject().put("secret", secret).put("activityId", activityId);
+        } catch (JSONException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     private LinearLayout tabs() {
