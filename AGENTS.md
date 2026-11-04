@@ -40,7 +40,7 @@ Czytaj dodatkowe źródła tylko wtedy, gdy task tego wymaga:
 - `docs/CODE_STRUCTURE_GUARDS.md` dla dużych plików, granic modułów i zależności.
 - `docs/CONTEXT_BUDGET_GUARD.md` dla długich albo drogich sesji.
 - `docs/CONTRACTS.md` i `docs/MODULE_MAP.md` tylko gdy zmieniasz kontrakt albo kilka modułów.
-- `AGENT_DEV_POLICY.md` jako reference/on-demand dla maintainerów workflow i rzadszych edge case'ów.
+- `docs/AGENT_DEV_POLICY.md` jako reference/on-demand dla maintainerów workflow i rzadszych edge case'ów.
 - `README.md` jako onboarding repo, nie jako domyślny kontrakt taska.
 
 ## Escalation
