@@ -10,7 +10,7 @@ export function h(tag, props = {}, ...children) {
 }
 
 export function show(root, ...nodes) {
-  root.replaceChildren(...nodes);
+  root.replaceChildren(...nodes.flat());
 }
 
 export const message = (text) => h("p", { class: "message", role: "status" }, text);

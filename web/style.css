@@ -13,6 +13,11 @@ button:disabled { opacity: 0.6; }
 .primary { background: var(--accent); color: #fff; }
 .secondary { background: var(--peach); color: var(--accent); }
 .card { background: #fff; border: 1px solid var(--line); border-radius: 20px; padding: 16px 20px; margin-bottom: 12px; }
+.row { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+.row input[type=checkbox] { width: auto; margin: 0; }
+.row span:first-of-type { flex: 1; }
+.row .target { width: 72px; margin: 0; padding: 8px; text-align: center; }
+.row .muted { margin: 0; }
 footer { position: fixed; bottom: 0; left: 0; right: 0; padding: 8px; text-align: center; color: var(--muted); font-size: 12px; }
 @media (prefers-color-scheme: dark) {
   :root { --bg: #17110d; --text: #f5ebe3; --muted: #b09a8a; --peach: #3a2418; --line: #3a2d24; }

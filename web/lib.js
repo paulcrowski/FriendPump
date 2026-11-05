@@ -1,4 +1,4 @@
-export const VERSION = "0.1.0";
+export const VERSION = "0.2.0";
 const BASE_URL = "https://silent-porpoise-665.convex.cloud";
 const KEY = "friendpump.secret";
 const SECRET_FORMAT = /^[0-9a-f]{64}$/;
