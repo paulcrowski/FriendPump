@@ -18,6 +18,24 @@ button:disabled { opacity: 0.6; }
 .row span:first-of-type { flex: 1; }
 .row .target { width: 72px; margin: 0; padding: 8px; text-align: center; }
 .row .muted { margin: 0; }
+.link { width: auto; padding: 0; margin: 0; background: none; color: var(--accent); }
+.tabs { display: flex; gap: 4px; padding: 4px; margin-bottom: 16px; background: var(--line); border-radius: 999px; }
+.tab { margin: 0; padding: 10px; background: none; color: var(--muted); }
+.tab.on { background: var(--bg); color: var(--text); }
+.split { display: flex; justify-content: space-between; align-items: baseline; }
+.member { display: flex; align-items: center; gap: 12px; margin: 12px 0; }
+.grow { flex: 1; }
+.avatar { width: 40px; height: 40px; border-radius: 50%; background: #d49a1f; color: #fff; display: grid; place-items: center; font-weight: 700; }
+.bar { height: 8px; margin-top: 6px; background: var(--line); border-radius: 4px; overflow: hidden; }
+.fill { height: 100%; background: var(--accent); }
+.fill.ok, .value.ok, .dot.ok { background: #2fa36b; color: #fff; }
+.value { color: var(--muted); font-weight: 700; }
+.value.ok { background: none; color: #2fa36b; }
+.actions { display: flex; gap: 8px; }
+.actions button { margin: 0; padding: 12px 4px; }
+.ghost { background: var(--line); color: var(--muted); }
+.dots { display: flex; gap: 6px; margin-top: 6px; }
+.dot { width: 28px; height: 28px; border-radius: 50%; background: var(--line); display: grid; place-items: center; font-size: 12px; }
 footer { position: fixed; bottom: 0; left: 0; right: 0; padding: 8px; text-align: center; color: var(--muted); font-size: 12px; }
 @media (prefers-color-scheme: dark) {
   :root { --bg: #17110d; --text: #f5ebe3; --muted: #b09a8a; --peach: #3a2418; --line: #3a2d24; }

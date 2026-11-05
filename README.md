@@ -22,6 +22,12 @@ The point is gentle motivation, not a leaderboard: a friend's green check makes 
 
 Integrity: each release ships a `SHA256SUMS` file next to the APK.
 
+## Use it in the browser (PWA)
+
+**[paulcrowski.github.io/FriendPump](https://paulcrowski.github.io/FriendPump/)** works on any phone or desktop, no install needed. Open it, then use *Add to Home screen* (Android/iOS) or *Install* (Chrome/Edge) to run it like an app.
+
+The web version covers circles, joining with a code, Today and Week. Open groups and Life chores are Android-only for now. The web app and the Android app talk to the same backend, but each device has its own identity: join a circle on the web with the same code you use on your phone.
+
 ## How it works
 
 - **Circles.** Create a circle ("Workouts"), pick activities and set a daily goal for each. You can belong to several circles.

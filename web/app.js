@@ -1,4 +1,5 @@
 import { ERRORS, VERSION, createSecret, loadSecret, mutation, query } from "./lib.js";
+import { openCircle } from "./circle.js";
 import { createForm, joinForm } from "./circles.js";
 import { h, message, show } from "./ui.js";
 
@@ -39,7 +40,7 @@ async function home(secret, name) {
   const back = () => home(secret, name);
   const cards = res.value.map((c) => {
     const code = `${c.inviteCode.slice(0, 4)}-${c.inviteCode.slice(4)}`;
-    return h("div", { class: "card" }, h("h2", {}, c.name), h("p", { class: "muted" }, `${c.memberCount} ${c.memberCount === 1 ? "person" : "people"} · ${c.activities.map((a) => a.emoji).join(" ")}`), h("button", { class: "secondary", onclick: () => share(c.name, code) }, `Code ${code} · Share`));
+    return h("div", { class: "card" }, h("h2", {}, c.name), h("p", { class: "muted" }, `${c.memberCount} ${c.memberCount === 1 ? "person" : "people"} · ${c.activities.map((a) => a.emoji).join(" ")}`), h("button", { class: "primary", onclick: () => openCircle(root, secret, c, back) }, "Open ›"), h("button", { class: "secondary", onclick: () => share(c.name, code) }, `Code ${code} · Share`));
   });
   const intro = cards.length ? cards : h("p", { class: "muted" }, "You don't have a circle yet. Create one and send the code to friends.");
   show(root, h("h1", {}, `Hi, ${name}!`), intro, h("button", { class: "primary", onclick: () => createForm(root, secret, back) }, "Create a circle"), h("button", { class: "secondary", onclick: () => joinForm(root, secret, back) }, "Join with a code"));

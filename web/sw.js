@@ -1,6 +1,6 @@
 // Tylko powłoka aplikacji z cache. Dane (Convex) zawsze idą przez sieć: brak „pustego sukcesu” offline.
-const CACHE = "friendpump-shell-0.2.0";
-const SHELL = ["./", "index.html", "style.css", "app.js", "lib.js", "ui.js", "circles.js", "manifest.webmanifest", "icon-192.png", "icon-512.png"];
+const CACHE = "friendpump-shell-0.3.0";
+const SHELL = ["./", "index.html", "style.css", "app.js", "lib.js", "ui.js", "circles.js", "circle.js", "manifest.webmanifest", "icon-192.png", "icon-512.png"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL)).then(() => self.skipWaiting()));
